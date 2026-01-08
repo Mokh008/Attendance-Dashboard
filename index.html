@@ -1,1 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Attendance Dashboard | Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: linear-gradient(135deg, #1e293b, #020617);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-card {
+      background: #0f172a;
+      padding: 40px;
+      width: 340px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    .login-card h2 {
+      color: #e5e7eb;
+      margin-bottom: 5px;
+    }
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 25px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #4f46e5;
+    }
+    #error {
+      margin-top: 15px;
+      color: #f87171;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <h2>Attendance Dashboard</h2>
+    <p class="subtitle">تسجيل دخول المدير</p>
+
+    <input id="id" type="text" placeholder="ID">
+    <input id="pin" type="password" placeholder="PIN (4 أرقام)" maxlength="4">
+
+    <button onclick="login()">تسجيل الدخول</button>
+
+    <div id="error"></div>
+  </div>
+
+  <script>
+    // 🔴 حط هنا الـ Web App URL
+    const API_URL = "PUT_YOUR_WEB_APP_URL_HERE";
+
+    function login() {
+      const id = document.getElementById("id").value.trim();
+      const pin = document.getElementById("pin").value.trim();
+      const error = document.getElementById("error");
+
+      error.textContent = "";
+
+      if (!id || !pin) {
+        error.textContent = "من فضلك أدخل ID و PIN";
+        return;
+      }
+
+      fetch(`${API_URL}?action=login&id=${id}&pin=${pin}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            sessionStorage.setItem("user", JSON.stringify(data.user));
+            window.location.href = "dashboard.html";
+          } else {
+            error.textContent = "بيانات الدخول غير صحيحة";
+          }
+        })
+        .catch(() => {
+          error.textContent = "خطأ في الاتصال بالسيرفر";
+        });
+    }
+  </script>
+
+</body>
+</html>
 
