@@ -23,23 +23,11 @@
       font-weight: bold;
     }
 
-    .reload-box {
-      text-align: center;
-      margin: 15px 0;
-    }
-    .reload-box button {
-      padding: 10px 22px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      background: #6366f1;
-      color: white;
-    }
-
     .container {
       padding: 20px;
     }
+
+    /* ===== Summary Cards ===== */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -63,7 +51,47 @@
       color: #6366f1;
     }
 
-    /* Charts */
+    /* ===== Department Cards ===== */
+    .departments {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 15px;
+    }
+
+    .dept-card {
+      background: #0f172a;
+      padding: 15px;
+      border-radius: 12px;
+    }
+
+    .dept-card h4 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #c7d2fe;
+      text-align: center;
+    }
+
+    .dept-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .present { color: #22c55e; }
+    .absent { color: #ef4444; }
+
+    .names {
+      font-size: 12px;
+      line-height: 1.6;
+      max-height: 120px;
+      overflow-y: auto;
+      border-top: 1px solid #1e293b;
+      padding-top: 8px;
+    }
+
+    /* ===== Charts ===== */
     .charts {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -89,17 +117,12 @@
   Attendance Dashboard
 </header>
 
-<!-- زر Reload -->
-<div class="reload-box">
-  <button onclick="manualReload()">🔄 تحديث البيانات</button>
-</div>
-
 <div class="container">
 
-  <!-- ===== Cards ===== -->
+  <!-- ===== Summary Cards ===== -->
   <div class="cards">
     <div class="card">
-      <h3>إجمالي الحضور</h3>
+      <h3>إجمالي الموظفين</h3>
       <p id="total">-</p>
     </div>
     <div class="card">
@@ -111,6 +134,9 @@
       <p id="outCount">-</p>
     </div>
   </div>
+
+  <!-- ===== Department Cards ===== -->
+  <div class="departments" id="departmentsBox"></div>
 
   <!-- ===== Charts ===== -->
   <div class="charts">
@@ -128,34 +154,47 @@
 </div>
 
 <script>
-  // 🔴 API URL
   const API_URL = "https://script.google.com/macros/s/AKfycbwfdtWYYiyzNhCIJV2S8XAYK5kyG-zrHNWcC1MWTl3sNI2AKtjz210DnqIKavOdDoplyw/exec";
 
-  // 🛡️ حماية الصفحة
+  // حماية
   const user = JSON.parse(sessionStorage.getItem("user"));
-  if (!user) {
-    window.location.href = "index.html";
-  }
+  if (!user) location.href = "index.html";
 
   let doughnutChart = null;
   let barChart = null;
 
-  function loadDashboard(force = false) {
+  function loadDashboard() {
     const today = new Date().toLocaleDateString("en-CA");
-    const cacheBuster = force ? `&_=${Date.now()}` : "";
 
-    fetch(`${API_URL}?action=attendanceSummary&role=${user.role}&region=${user.region}&date=${today}${cacheBuster}`)
+    fetch(`${API_URL}?action=attendanceSummary&role=${user.role}&region=${user.region}&date=${today}`)
       .then(res => res.json())
       .then(summary => {
 
-        let total = 0;
-        let present = 0;
-        let absent = 0;
+        let total = 0, present = 0, absent = 0;
+        const deptBox = document.getElementById("departmentsBox");
+        deptBox.innerHTML = "";
 
-        Object.values(summary.departments).forEach(d => {
+        Object.entries(summary.departments).forEach(([dept, d]) => {
           total += d.total;
           present += d.present;
           absent += d.absent;
+
+          deptBox.innerHTML += `
+            <div class="dept-card">
+              <h4>${dept}</h4>
+              <div class="dept-stats">
+                <span class="present">✔ حضر: ${d.present}</span>
+                <span class="absent">✖ غاب: ${d.absent}</span>
+              </div>
+              <div class="names">
+                <strong class="present">الحاضرين:</strong><br>
+                ${(d.presentNames || []).join("، ") || "-"}
+                <br><br>
+                <strong class="absent">الغايبين:</strong><br>
+                ${(d.absentNames || []).join("، ") || "-"}
+              </div>
+            </div>
+          `;
         });
 
         document.getElementById("total").textContent = total;
@@ -164,60 +203,43 @@
 
         // Doughnut
         if (doughnutChart) doughnutChart.destroy();
-        doughnutChart = new Chart(
-          document.getElementById("attendanceDoughnut"),
-          {
-            type: "doughnut",
-            data: {
-              labels: ["حضر", "غاب"],
-              datasets: [{
-                data: [present, absent],
-                backgroundColor: ["#22c55e", "#ef4444"]
-              }]
-            }
+        doughnutChart = new Chart(attendanceDoughnut, {
+          type: "doughnut",
+          data: {
+            labels: ["حضر", "غاب"],
+            datasets: [{
+              data: [present, absent],
+              backgroundColor: ["#22c55e", "#ef4444"]
+            }]
           }
-        );
+        });
 
         // Bar
         const labels = Object.keys(summary.departments);
-        const presentData = labels.map(d => summary.departments[d].present);
-        const absentData = labels.map(d => summary.departments[d].absent);
-
         if (barChart) barChart.destroy();
-        barChart = new Chart(
-          document.getElementById("attendanceBar"),
-          {
-            type: "bar",
-            data: {
-              labels,
-              datasets: [
-                { label: "حضر", data: presentData, backgroundColor: "#22c55e" },
-                { label: "غاب", data: absentData, backgroundColor: "#ef4444" }
-              ]
-            },
-            options: {
-              responsive: true,
-              scales: {
-                x: { stacked: true },
-                y: { stacked: true, beginAtZero: true }
-              }
+        barChart = new Chart(attendanceBar, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              { label: "حضر", data: labels.map(l => summary.departments[l].present), backgroundColor: "#22c55e" },
+              { label: "غاب", data: labels.map(l => summary.departments[l].absent), backgroundColor: "#ef4444" }
+            ]
+          },
+          options: {
+            scales: {
+              x: { stacked: true },
+              y: { stacked: true, beginAtZero: true }
             }
           }
-        );
-      })
-      .catch(() => {
-        alert("خطأ في تحميل الداتا");
+        });
       });
   }
 
-  function manualReload() {
-    loadDashboard(true);
-  }
-
-  // أول تحميل
+  // تحميل أول مرة
   loadDashboard();
 
-  // Auto update كل 10 ثواني
+  // تحديث تلقائي كل 10 ثواني
   setInterval(loadDashboard, 10000);
 </script>
 
