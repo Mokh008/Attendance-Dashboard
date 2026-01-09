@@ -126,7 +126,6 @@ header{
   <input type="date" id="datePicker">
 </div>
 
-<!-- Cards -->
 <div class="cards">
   <div class="card">
     <h3>إجمالي المهندسين</h3>
@@ -142,7 +141,6 @@ header{
   </div>
 </div>
 
-<!-- Charts -->
 <div class="charts">
   <div class="chart-box">
     <h4>الحضور حسب الإدارات</h4>
@@ -154,7 +152,6 @@ header{
   </div>
 </div>
 
-<!-- Departments -->
 <div class="departments" id="departmentsBox"></div>
 
 </div>
@@ -207,6 +204,7 @@ document.getElementById("totalCount").textContent = TOTAL;
 
 let barChart = null;
 let pieChart = null;
+let lastINCount = 0;
 
 /* ================= DATE ================= */
 const dateInput = document.getElementById("datePicker");
@@ -243,8 +241,29 @@ function loadDashboard(){
       document.getElementById("inCount").textContent = presentSet.size;
       document.getElementById("outCount").textContent = TOTAL - presentSet.size;
 
+      lastINCount = presentSet.size;
+
       renderDepartments(deptData, presentSet);
       drawCharts(deptData, presentSet.size);
+    });
+}
+
+/* ================= LIVE CHECKER ================= */
+function checkForLiveUpdate(){
+  if (dateInput.value !== today) return;
+
+  fetch(`${API_URL}?action=attendance&date=${today}`)
+    .then(r => r.json())
+    .then(rows => {
+      if (!Array.isArray(rows)) return;
+
+      const todayIN = rows.filter(r =>
+        r.date === today && r.status === "IN"
+      ).length;
+
+      if (todayIN > lastINCount) {
+        loadDashboard();
+      }
     });
 }
 
@@ -292,7 +311,6 @@ function drawCharts(deptData, inCount){
     data:{
       labels:DEPARTMENTS,
       datasets:[{
-        label:"حضر",
         data:DEPARTMENTS.map(d => deptData[d].length),
         backgroundColor:"#60a5fa"
       }]
@@ -321,10 +339,8 @@ function drawCharts(deptData, inCount){
   });
 }
 
-/* ================= AUTO REFRESH ================= */
-setInterval(() => {
-  if (dateInput.value === today) loadDashboard();
-}, 30000);
+/* ================= AUTO ================= */
+setInterval(checkForLiveUpdate, 10000);
 
 loadDashboard();
 </script>
