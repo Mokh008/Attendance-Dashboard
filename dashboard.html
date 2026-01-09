@@ -121,7 +121,8 @@
   let barChart = null;
 
   function loadDashboard() {
-    const today = new Date().toISOString().split("T")[0];
+    // ✅ تاريخ محلي صحيح (حل مشكلة عدم التحديث)
+    const today = new Date().toLocaleDateString("en-CA");
 
     fetch(`${API_URL}?action=attendanceSummary&role=${user.role}&region=${user.region}&date=${today}`)
       .then(res => res.json())
@@ -204,7 +205,6 @@
 
   // Live Update كل 10 ثواني
   setInterval(loadDashboard, 10000);
-
 </script>
 
 </body>
