@@ -116,7 +116,7 @@ header {
   </div>
 
   <div class="cards">
-    <div class="card"><h3>إجمالي المهندسين</h3><p id="total">-</p></div>
+    <div class="card"><h3>إجمالي المهندسين</h3><p id="total">32</p></div>
     <div class="card"><h3>حضر</h3><p id="inCount">-</p></div>
     <div class="card"><h3>غاب</h3><p id="outCount">-</p></div>
   </div>
@@ -154,34 +154,38 @@ function loadDashboard() {
     .then(r => r.json())
     .then(rows => {
 
-      // empId هنا Key ثابت (أصله Employees.A)
-      const employeesById = {};
-      const presentToday = new Set();
+      const lastActionByEmp = {};
+      const empInfo = {};
 
       rows.forEach(r => {
         if (!r.empId) return;
 
-        if (!employeesById[r.empId]) {
-          employeesById[r.empId] = {
-            name: r.name,            // Sheet1.H
-            dept: r.department,      // Sheet1.N
-            location: r.location     // Sheet1.B
+        // حفظ بيانات الموظف مرة واحدة
+        if (!empInfo[r.empId]) {
+          empInfo[r.empId] = {
+            name: r.name,        // H
+            dept: r.department,  // N
+            location: r.location // B
           };
         }
 
-        if (r.status === "IN") {
-          presentToday.add(r.empId);
-        }
+        // آخر حركة في اليوم
+        lastActionByEmp[r.empId] = r.status;
       });
 
       const departments = {};
+      const presentSet = new Set();
 
-      Object.entries(employeesById).forEach(([id, emp]) => {
+      Object.entries(lastActionByEmp).forEach(([empId, status]) => {
+        const emp = empInfo[empId];
+        if (!emp) return;
+
         if (!departments[emp.dept]) {
           departments[emp.dept] = { present: [], absent: [] };
         }
 
-        if (presentToday.has(id)) {
+        if (status === "IN") {
+          presentSet.add(empId);
           departments[emp.dept].present.push({
             name: emp.name,
             location: emp.location
@@ -191,12 +195,11 @@ function loadDashboard() {
         }
       });
 
-      const presentCount = presentToday.size;
+      const presentCount = presentSet.size;
       const absentCount  = TOTAL_EMPLOYEES - presentCount;
 
-      document.getElementById("total").textContent   = TOTAL_EMPLOYEES;
-      document.getElementById("inCount").textContent = presentCount;
-      document.getElementById("outCount").textContent= absentCount;
+      document.getElementById("inCount").textContent  = presentCount;
+      document.getElementById("outCount").textContent = absentCount;
 
       const box = document.getElementById("departmentsBox");
       box.innerHTML = "";
