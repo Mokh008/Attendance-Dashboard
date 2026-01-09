@@ -33,7 +33,7 @@ header{
   font-size:13px;
 }
 
-/* Cards */
+/* KPI Cards */
 .cards{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -53,7 +53,7 @@ header{
 }
 .card p{
   margin:6px 0 0;
-  font-size:20px;
+  font-size:22px;
   font-weight:bold;
 }
 
@@ -73,34 +73,82 @@ header{
 /* Departments */
 .departments{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
-  gap:12px;
+  grid-template-columns:repeat(auto-fit,minmax(520px,1fr));
+  gap:16px;
 }
+
 .dept-card{
-  background:#0f172a;
-  padding:12px;
-  border-radius:12px;
+  background:linear-gradient(145deg,#0f172a,#020617);
+  padding:14px;
+  border-radius:14px;
+  border:1px solid #1e293b;
 }
+.dept-card h4{
+  margin:0 0 10px;
+  font-size:15px;
+  color:#e0e7ff;
+}
+
+/* Present / Absent split */
 .split{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
+  grid-template-columns:1.4fr 1fr;
+  gap:12px;
 }
+
 .box{
   background:#020617;
-  border-radius:8px;
-  padding:8px;
-  font-size:12px;
+  border-radius:10px;
+  padding:10px;
+  font-size:13px;
+  max-height:260px;
+  overflow:auto;
 }
+.box b{
+  display:block;
+  margin-bottom:6px;
+  color:#93c5fd;
+}
+
+/* Attendance row (PRO LOOK) */
 .att-row{
-  display:flex;
-  gap:6px;
-  padding:4px 0;
+  display:grid;
+  grid-template-columns:2.2fr 2fr 1fr;
+  align-items:center;
+  gap:8px;
+  padding:6px 0;
   border-bottom:1px dashed #1e293b;
 }
-.att-name{flex:2}
-.att-loc{flex:1;color:#93c5fd}
-.att-time{color:#c7d2fe}
+.att-row:last-child{
+  border-bottom:none;
+}
+
+.att-name{
+  font-weight:500;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.att-loc{
+  color:#93c5fd;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.att-time{
+  text-align:right;
+  font-size:12px;
+  color:#c7d2fe;
+}
+
+/* Absent */
+.absent-name{
+  display:block;
+  padding:2px 0;
+}
 </style>
 </head>
 
@@ -224,7 +272,7 @@ function loadDashboard(){
     });
 }
 
-/* ================= LIVE CHECK (THE FIX ✅) ================= */
+/* ================= LIVE CHECK ================= */
 function checkForLiveUpdate(){
   if (dateInput.value !== today) return;
 
@@ -232,7 +280,6 @@ function checkForLiveUpdate(){
     .then(r => r.json())
     .then(data => {
       if (!data.lastInSignature) return;
-
       if (data.lastInSignature !== lastSignature) {
         lastSignature = data.lastInSignature;
         loadDashboard();
@@ -265,8 +312,8 @@ function renderDepartments(deptData, presentSet){
             `).join("") || "-"}
           </div>
           <div class="box">
-            <b>غاب (${absent.length})</b><br>
-            ${absent.join("<br>") || "-"}
+            <b>غاب (${absent.length})</b>
+            ${absent.map(a => `<span class="absent-name">${a}</span>`).join("") || "-"}
           </div>
         </div>
       </div>
