@@ -43,7 +43,7 @@ header{
 .departments{
   margin-top:30px;
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
   gap:15px;
 }
 .dept-card{
@@ -68,9 +68,20 @@ header{
   font-size:13px;
 }
 .box h5{
-  margin:0 0 5px;
+  margin:0 0 8px;
   color:#93c5fd;
 }
+.att-row{
+  display:flex;
+  gap:10px;
+  padding:6px 0;
+  border-bottom:1px dashed #1e293b;
+  align-items:center;
+  font-size:12.5px;
+}
+.att-name{flex:2}
+.att-loc{flex:1;color:#93c5fd}
+.att-time{flex:0;color:#c7d2fe}
 canvas{margin-top:30px}
 </style>
 </head>
@@ -86,9 +97,9 @@ canvas{margin-top:30px}
 </div>
 
 <div class="cards">
-  <div class="card"><h3>إجمالي المهندسين</h3><p>32</p></div>
+  <div class="card"><h3>إجمالي المهندسين</h3><p id="totalCount">0</p></div>
   <div class="card"><h3>حضر</h3><p id="inCount">0</p></div>
-  <div class="card"><h3>غاب</h3><p id="outCount">32</p></div>
+  <div class="card"><h3>غاب</h3><p id="outCount">0</p></div>
 </div>
 
 <canvas id="deptChart" height="120"></canvas>
@@ -98,129 +109,165 @@ canvas{margin-top:30px}
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycby9We83tXmtxG_1ykdriEXyASO_685z1ieBrMb9HJpRdEYs8KXhzAkjFyaCchjgwoQAzg/exec";
+/* ================== CONFIG ================== */
 
-const ENGINEERS = [
-"محمد عبداللطيف عبد الحميد علي",
-"Efat Youssef Assad Hanna",
-"Waleed Mahmoud Ismaiel Abdelrahim",
-"Ahmed Abdelnasser Mohamed Aly",
-"Amr Abdullah Abdrabbo Hlhil",
-"Wael Ibrahim Eid Mohamed",
-"Aly Aboseif Abdelbadea Aly Abosaif",
-"Mahmoud Fathy Youssef Ismail",
-"Hussien Kamel Abdelkarem Abdelelamam",
-"Reda Mekhemar Abdelhamid Abdelhakim",
-"Mohamed Khaled Mohamed Khaled",
-"Alaaeldien Mohamed Soliman AbdelhAlym",
-"Afraim Shawky Mikhail Habashy",
-"Mohamed Hussien Mohamed Ahmed",
-"Ahmed Abdelfattah Aly Aly",
-"Mohamed Moustafa Abdelrahman Reyad",
-"Abdullah Shaaban Saad Mourad",
-"Elfarouk Mohamed Ahmed Mohamed",
-"Essam Sayed Mohamed Seddik",
-"Eltawab Mahmoud Aly Aboelhassan",
-"Ibrahim Abdelnaser Abdelshafy Abdellatif",
-"Mohamed Saeed Aboelhagag Hassan",
-"Ahmed Mohamed Farouk Abdelrheam",
-"Ahmed Rabie Abdelrazik Hussien",
-"Mohamed Atef Mahmoud Elgeneidy",
-"Ali Ahmed Hassan Hamed",
-"Assem Hassan Abdelshafy Hassan",
-"Omar Metwally Ahmed Mohamed Salem",
-"Abdelmoneam Hassan Hafez Karrat",
-"Mahmoud Ramadan Mahmoud Abdelaziz",
-"Mahmoud Khaled",
-"Mohamed Youssef"
-];
+const API_URL =
+"https://script.google.com/macros/s/AKfycby9We83tXmtxG_1ykdriEXyASO_685z1ieBrMb9HJpRdEYs8KXhzAkjFyaCchjgwoQAzg/exec";
+
+/* Engineer → Department (FIXED SOURCE OF TRUTH) */
+const ENGINEER_DEPT = {
+  "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
+  "Efat Youssef Assad Hanna":"شمال المنيا",
+  "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
+  "Ahmed Abdelnasser Mohamed Aly":"توريدات",
+  "Amr Abdullah Abdrabbo Hlhil":"آلى",
+  "Wael Ibrahim Eid Mohamed":"بنى سويف",
+  "Aly Aboseif Abdelbadea Aly Abosaif":"جنوب المنيا",
+  "Mahmoud Fathy Youssef Ismail":"بنى سويف",
+  "Hussien Kamel Abdelkarem Abdelelamam":"جنوب المنيا",
+  "Reda Mekhemar Abdelhamid Abdelhakim":"جنوب المنيا",
+  "Mohamed Khaled Mohamed Khaled":"توريدات",
+  "Alaaeldien Mohamed Soliman AbdelhAlym":"آلى",
+  "Afraim Shawky Mikhail Habashy":"شمال المنيا",
+  "Mohamed Hussien Mohamed Ahmed":"جنوب المنيا",
+  "Ahmed Abdelfattah Aly Aly":"بنى سويف",
+  "Mohamed Moustafa Abdelrahman Reyad":"جنوب المنيا",
+  "Abdullah Shaaban Saad Mourad":"بنى سويف",
+  "Elfarouk Mohamed Ahmed Mohamed":"متابعه",
+  "Essam Sayed Mohamed Seddik":"جنوب المنيا",
+  "Eltawab Mahmoud Aly Aboelhassan":"آلى",
+  "Ibrahim Abdelnaser Abdelshafy Abdellatif":"آلى",
+  "Mohamed Saeed Aboelhagag Hassan":"آلى",
+  "Ahmed Mohamed Farouk Abdelrheam":"بنى سويف",
+  "Ahmed Rabie Abdelrazik Hussien":"شمال المنيا",
+  "Mohamed Atef Mahmoud Elgeneidy":"بنى سويف",
+  "Ali Ahmed Hassan Hamed":"آلى",
+  "Assem Hassan Abdelshafy Hassan":"بنى سويف",
+  "Omar Metwally Ahmed Mohamed Salem":"آلى",
+  "Abdelmoneam Hassan Hafez Karrat":"آلى",
+  "Mahmoud Ramadan Mahmoud Abdelaziz":"آلى",
+  "Mahmoud Khaled":"جنوب المنيا",
+  "Mohamed Youssef":"شمال المنيا"
+};
 
 const DEPARTMENTS = [
-"بنى سويف",
-"شمال المنيا",
-"توريدات",
-"آلى",
-"جنوب المنيا",
-"متابعه"
+  "بنى سويف",
+  "شمال المنيا",
+  "توريدات",
+  "آلى",
+  "جنوب المنيا",
+  "متابعه"
 ];
 
+const ENGINEERS = Object.keys(ENGINEER_DEPT);
 const TOTAL = ENGINEERS.length;
+
+document.getElementById("totalCount").textContent = TOTAL;
+
 let chart;
 
+/* ================== DATE ================== */
 const dateInput = document.getElementById("datePicker");
 dateInput.value = new Date().toLocaleDateString("en-CA");
 dateInput.addEventListener("change", loadDashboard);
 
+/* ================== MAIN ================== */
 function loadDashboard(){
-  fetch(`${API_URL}?action=attendance&date=${dateInput.value}`)
-  .then(r=>r.json())
-  .then(rows=>{
-    const present = {};
-    const deptData = {};
-    DEPARTMENTS.forEach(d=>deptData[d]=[]);
+  const selectedDate = dateInput.value;
 
-    rows.forEach(r=>{
-      if(r.status==="IN"){
-        present[r.name]=true;
-        if(deptData[r.department]){
-          deptData[r.department].push({
+  fetch(`${API_URL}?action=attendance&date=${selectedDate}`)
+    .then(r=>r.json())
+    .then(rows=>{
+
+      /* Filter ONLY selected date */
+      rows = rows.filter(r => r.date === selectedDate);
+
+      const presentSet = new Set();
+      const deptPresent = {};
+      DEPARTMENTS.forEach(d=>deptPresent[d]=[]);
+
+      rows.forEach(r=>{
+        if(r.status==="IN" && ENGINEER_DEPT[r.name]){
+          presentSet.add(r.name);
+          const dept = ENGINEER_DEPT[r.name];
+          deptPresent[dept].push({
             name:r.name,
-            location:r.location
+            location:r.location || "-",
+            time:r.time || "-"
           });
         }
-      }
+      });
+
+      document.getElementById("inCount").textContent = presentSet.size;
+      document.getElementById("outCount").textContent = TOTAL - presentSet.size;
+
+      renderDepartments(deptPresent, presentSet);
     });
-
-    const presentCount = Object.keys(present).length;
-    document.getElementById("inCount").textContent = presentCount;
-    document.getElementById("outCount").textContent = TOTAL - presentCount;
-
-    const box = document.getElementById("departmentsBox");
-    box.innerHTML="";
-
-    const chartIn=[], chartOut=[];
-
-    DEPARTMENTS.forEach(dept=>{
-      const inNames = deptData[dept];
-      const outNames = ENGINEERS.filter(e=>!present[e]);
-
-      chartIn.push(inNames.length);
-      chartOut.push(TOTAL - inNames.length);
-
-      box.innerHTML+=`
-      <div class="dept-card">
-        <h4>${dept}</h4>
-        <div class="split">
-          <div class="box">
-            <h5>حضر (${inNames.length})</h5>
-            ${inNames.map(n=>`${n.name} - ${n.location}`).join("<br>")||"-"}
-          </div>
-          <div class="box">
-            <h5>غاب</h5>
-            ${outNames.join("<br>")}
-          </div>
-        </div>
-      </div>`;
-    });
-
-    drawChart(chartIn,chartOut);
-  });
 }
 
-function drawChart(inData,outData){
+/* ================== UI ================== */
+function renderDepartments(deptPresent, presentSet){
+  const box = document.getElementById("departmentsBox");
+  box.innerHTML="";
+
+  const chartIn=[], chartOut=[];
+
+  DEPARTMENTS.forEach(dept=>{
+    const allDeptEngineers =
+      ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
+
+    const present = deptPresent[dept].map(x=>x.name);
+    const absent =
+      allDeptEngineers.filter(e=>!presentSet.has(e));
+
+    chartIn.push(present.length);
+    chartOut.push(absent.length);
+
+    box.innerHTML += `
+    <div class="dept-card">
+      <h4>${dept}</h4>
+      <div class="split">
+        <div class="box">
+          <h5>حضر (${present.length})</h5>
+          ${
+            deptPresent[dept].map(p=>`
+              <div class="att-row">
+                <span class="att-name">${p.name}</span>
+                <span class="att-loc">📍 ${p.location}</span>
+                <span class="att-time">⏰ ${p.time}</span>
+              </div>
+            `).join("") || "-"
+          }
+        </div>
+        <div class="box">
+          <h5>غاب (${absent.length})</h5>
+          ${absent.join("<br>") || "-"}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  drawChart(chartIn, chartOut);
+}
+
+/* ================== CHART ================== */
+function drawChart(inData, outData){
   if(chart) chart.destroy();
-  chart=new Chart(document.getElementById("deptChart"),{
+
+  chart = new Chart(document.getElementById("deptChart"),{
     type:"bar",
     data:{
       labels:DEPARTMENTS,
       datasets:[
-        {label:"حضر",data:inData,backgroundColor:"#60a5fa"},
-        {label:"غاب",data:outData,backgroundColor:"#a5b4fc"}
+        {label:"حضر", data:inData, backgroundColor:"#60a5fa"},
+        {label:"غاب", data:outData, backgroundColor:"#a5b4fc"}
       ]
     },
     options:{
       responsive:true,
-      plugins:{legend:{labels:{color:"#e5e7eb"}}},
+      plugins:{
+        legend:{labels:{color:"#e5e7eb"}}
+      },
       scales:{
         x:{ticks:{color:"#e5e7eb"}},
         y:{ticks:{color:"#e5e7eb"}}
