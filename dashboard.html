@@ -74,6 +74,7 @@ header {
 }
 
 .present { color: #22c55e; font-size: 13px; }
+.absent  { color: #ef4444; font-size: 13px; }
 
 .names {
   font-size: 12px;
@@ -106,12 +107,10 @@ header {
 
 <div class="container">
 
-  <!-- 📅 Calendar -->
   <div class="date-box">
     <input type="date" id="datePicker">
   </div>
 
-  <!-- Summary -->
   <div class="cards">
     <div class="card">
       <h3>إجمالي الحضور</h3>
@@ -127,10 +126,8 @@ header {
     </div>
   </div>
 
-  <!-- Departments -->
   <div class="departments" id="departmentsBox"></div>
 
-  <!-- Charts -->
   <div class="charts">
     <div class="chart-box">
       <canvas id="attendanceDoughnut"></canvas>
@@ -144,6 +141,7 @@ header {
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycby9We83tXmtxG_1ykdriEXyASO_685z1ieBrMb9HJpRdEYs8KXhzAkjFyaCchjgwoQAzg/exec";
+const TOTAL_EMPLOYEES = 32;
 
 const user = JSON.parse(sessionStorage.getItem("user"));
 if (!user) location.href = "index.html";
@@ -159,67 +157,103 @@ dateInput.addEventListener("change", loadDashboard);
 function loadDashboard() {
   const date = dateInput.value;
 
-  Promise.all([
-    fetch(`${API_URL}?action=dashboard&role=${user.role}&region=${user.region}&date=${date}`).then(r => r.json()),
-    fetch(`${API_URL}?action=attendance&role=${user.role}&region=${user.region}&date=${date}`).then(r => r.json())
-  ])
-  .then(([summary, attendance]) => {
+  fetch(`${API_URL}?action=attendance&role=${user.role}&region=${user.region}&date=${date}`)
+    .then(r => r.json())
+    .then(rows => {
 
-    document.getElementById("total").textContent   = summary.totalAttendance || 0;
-    document.getElementById("inCount").textContent = summary.inCount || 0;
-    document.getElementById("outCount").textContent= summary.outCount || 0;
+      const allEmployees = {};
+      const presentSet = new Set();
 
-    const deptNames = {};
+      rows.forEach(r => {
+        if (!r.empId) return;
 
-    attendance.forEach(r => {
-      const dept = r.department || "غير محدد";
-      const name = r.name || "";
+        if (!allEmployees[r.empId]) {
+          allEmployees[r.empId] = {
+            name: r.name,
+            department: r.department || "غير محدد"
+          };
+        }
 
-      if (!deptNames[dept]) deptNames[dept] = [];
-      if (name) deptNames[dept].push(name);
-    });
+        if (r.status === "IN") {
+          presentSet.add(r.empId);
+        }
+      });
 
-    const box = document.getElementById("departmentsBox");
-    box.innerHTML = "";
+      const departments = {};
 
-    Object.entries(summary.byDepartment || {}).forEach(([dept, count]) => {
-      box.innerHTML += `
-        <div class="dept-card">
-          <h4>${dept}</h4>
-          <div class="present">✔ حضر: ${count}</div>
-          <div class="names">
-            ${(deptNames[dept] || []).join("، ") || "-"}
+      Object.entries(allEmployees).forEach(([id, emp]) => {
+        if (!departments[emp.department]) {
+          departments[emp.department] = { present: [], absent: [] };
+        }
+
+        if (presentSet.has(id)) {
+          departments[emp.department].present.push(emp.name);
+        } else {
+          departments[emp.department].absent.push(emp.name);
+        }
+      });
+
+      const presentCount = presentSet.size;
+      const absentCount  = TOTAL_EMPLOYEES - presentCount;
+
+      document.getElementById("total").textContent   = TOTAL_EMPLOYEES;
+      document.getElementById("inCount").textContent = presentCount;
+      document.getElementById("outCount").textContent= absentCount;
+
+      const box = document.getElementById("departmentsBox");
+      box.innerHTML = "";
+
+      Object.entries(departments).forEach(([dept, d]) => {
+        box.innerHTML += `
+          <div class="dept-card">
+            <h4>${dept}</h4>
+            <div class="names">
+              <strong class="present">✔ حضر (${d.present.length})</strong><br>
+              ${d.present.join("، ") || "-"}
+              <hr>
+              <strong class="absent">✖ غاب (${d.absent.length})</strong><br>
+              ${d.absent.join("، ") || "-"}
+            </div>
           </div>
-        </div>
-      `;
-    });
+        `;
+      });
 
-    if (doughnutChart) doughnutChart.destroy();
-    doughnutChart = new Chart(attendanceDoughnut, {
-      type: "doughnut",
-      data: {
-        labels: ["حضر", "غاب"],
-        datasets: [{
-          data: [summary.inCount, summary.outCount],
-          backgroundColor: ["#22c55e", "#ef4444"]
-        }]
-      }
-    });
+      if (doughnutChart) doughnutChart.destroy();
+      doughnutChart = new Chart(attendanceDoughnut, {
+        type: "doughnut",
+        data: {
+          labels: ["حضر", "غاب"],
+          datasets: [{
+            data: [presentCount, absentCount],
+            backgroundColor: ["#22c55e", "#ef4444"]
+          }]
+        }
+      });
 
-    if (barChart) barChart.destroy();
-    barChart = new Chart(attendanceBar, {
-      type: "bar",
-      data: {
-        labels: Object.keys(summary.byDepartment || {}),
-        datasets: [{
-          label: "الحضور",
-          data: Object.values(summary.byDepartment || {}),
-          backgroundColor: "#22c55e"
-        }]
-      }
-    });
+      if (barChart) barChart.destroy();
+      barChart = new Chart(attendanceBar, {
+        type: "bar",
+        data: {
+          labels: Object.keys(departments),
+          datasets: [
+            {
+              label: "حضر",
+              data: Object.values(departments).map(d => d.present.length),
+              backgroundColor: "#22c55e"
+            },
+            {
+              label: "غاب",
+              data: Object.values(departments).map(d => d.absent.length),
+              backgroundColor: "#ef4444"
+            }
+          ]
+        },
+        options: {
+          scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+        }
+      });
 
-  });
+    });
 }
 
 loadDashboard();
