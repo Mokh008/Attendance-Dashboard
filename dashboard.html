@@ -98,12 +98,27 @@ header {
   padding: 20px;
   border-radius: 12px;
 }
+
+/* ===== Loader ===== */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  z-index: 9999;
+}
 </style>
 </head>
 
 <body>
 
 <header>Attendance Dashboard</header>
+
+<!-- Loader -->
+<div id="loader">⏳ جاري تحميل البيانات…</div>
 
 <div class="container">
 
@@ -146,6 +161,8 @@ const TOTAL_EMPLOYEES = 32;
 const user = JSON.parse(sessionStorage.getItem("user"));
 if (!user) location.href = "index.html";
 
+const loader = document.getElementById("loader");
+
 const dateInput = document.getElementById("datePicker");
 dateInput.value = new Date().toLocaleDateString("en-CA");
 
@@ -156,6 +173,7 @@ dateInput.addEventListener("change", loadDashboard);
 
 function loadDashboard() {
   const date = dateInput.value;
+  loader.style.display = "flex";
 
   fetch(`${API_URL}?action=attendance&role=${user.role}&region=${user.region}&date=${date}`)
     .then(r => r.json())
@@ -169,7 +187,7 @@ function loadDashboard() {
 
         if (!allEmployees[r.empId]) {
           allEmployees[r.empId] = {
-            name: r.name,
+            name: r.name,                 // ✅ Sheet1 - Column H
             department: r.department || "غير محدد"
           };
         }
@@ -253,6 +271,10 @@ function loadDashboard() {
         }
       });
 
+      loader.style.display = "none";
+    })
+    .catch(() => {
+      loader.style.display = "none";
     });
 }
 
