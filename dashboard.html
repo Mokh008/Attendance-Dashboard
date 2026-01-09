@@ -198,7 +198,7 @@ const today = new Date().toLocaleDateString("en-CA");
 dateInput.value = today;
 dateInput.addEventListener("change", loadDashboard);
 
-/* ================= MAIN ================= */
+/* ================= LOAD DASHBOARD ================= */
 function loadDashboard(){
   const selectedDate = dateInput.value;
 
@@ -211,48 +211,31 @@ function loadDashboard(){
       const deptData = {};
       DEPARTMENTS.forEach(d => deptData[d] = []);
 
-      const todayRows = rows.filter(r => r.date === selectedDate);
-
-      todayRows.forEach(r => {
-        if (r.status === "IN" && ENGINEER_DEPT[r.name]) {
+      rows.filter(r => r.date === selectedDate && r.status === "IN")
+        .forEach(r => {
           presentSet.add(r.name);
           deptData[ENGINEER_DEPT[r.name]].push(r);
-        }
-      });
+        });
 
       document.getElementById("inCount").textContent = presentSet.size;
       document.getElementById("outCount").textContent = TOTAL - presentSet.size;
 
-      updateLastSignature(todayRows);
       renderDepartments(deptData, presentSet);
       drawCharts(deptData, presentSet.size);
     });
 }
 
-/* ================= LIVE ================= */
-function updateLastSignature(rows){
-  const inRows = rows.filter(r => r.status === "IN");
-  if (!inRows.length) return;
-
-  const last = inRows[inRows.length - 1];
-  lastSignature = `${last.name}|${last.time}|${last.location}`;
-}
-
+/* ================= LIVE CHECK (THE FIX ✅) ================= */
 function checkForLiveUpdate(){
   if (dateInput.value !== today) return;
 
-  fetch(`${API_URL}?action=attendance&role=admin&region=ALL&date=${today}`)
+  fetch(`${API_URL}?action=dashboard&role=admin&region=ALL&date=${today}`)
     .then(r => r.json())
-    .then(rows => {
-      if (!Array.isArray(rows)) return;
+    .then(data => {
+      if (!data.lastInSignature) return;
 
-      const inRows = rows.filter(r => r.date === today && r.status === "IN");
-      if (!inRows.length) return;
-
-      const last = inRows[inRows.length - 1];
-      const currentSignature = `${last.name}|${last.time}|${last.location}`;
-
-      if (currentSignature !== lastSignature) {
+      if (data.lastInSignature !== lastSignature) {
+        lastSignature = data.lastInSignature;
         loadDashboard();
       }
     });
@@ -297,7 +280,7 @@ function drawCharts(deptData, inCount){
   if (barChart) barChart.destroy();
   if (pieChart) pieChart.destroy();
 
-  barChart = new Chart(document.getElementById("deptChart"),{
+  barChart = new Chart(deptChart,{
     type:"bar",
     data:{
       labels:DEPARTMENTS,
@@ -309,7 +292,7 @@ function drawCharts(deptData, inCount){
     options:{plugins:{legend:{display:false}}}
   });
 
-  pieChart = new Chart(document.getElementById("pieChartCanvas"),{
+  pieChart = new Chart(pieChartCanvas,{
     type:"pie",
     data:{
       labels:["حضر","غاب"],
