@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <title>Attendance Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -43,8 +47,27 @@
       font-weight: bold;
       color: #6366f1;
     }
+
+    /* Charts */
+    .charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+    .chart-box {
+      background: #0f172a;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    .chart-box h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #cbd5f5;
+    }
   </style>
 </head>
+
 <body>
 
 <header>
@@ -52,24 +75,40 @@
 </header>
 
 <div class="container">
+
+  <!-- ===== Cards ===== -->
   <div class="cards">
     <div class="card">
       <h3>إجمالي الحضور</h3>
       <p id="total">-</p>
     </div>
     <div class="card">
-      <h3>IN</h3>
+      <h3>حضر</h3>
       <p id="inCount">-</p>
     </div>
     <div class="card">
-      <h3>OUT</h3>
+      <h3>غاب</h3>
       <p id="outCount">-</p>
     </div>
   </div>
+
+  <!-- ===== Charts ===== -->
+  <div class="charts">
+    <div class="chart-box">
+      <h3>الحضور اليوم</h3>
+      <canvas id="attendanceDoughnut"></canvas>
+    </div>
+
+    <div class="chart-box">
+      <h3>الحضور حسب الإدارة</h3>
+      <canvas id="attendanceBar"></canvas>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  // 🔴 نفس الـ URL اللي حطيته في index.html
+  // 🔴 API URL
   const API_URL = "https://script.google.com/macros/s/AKfycbwjcfnXy1emhOKaaA0qr3B5mSQbdr3d4TZiHD-rOO8EXmfByRwrusGGdzzps4OFmhPdMA/exec";
 
   // 🛡️ حماية الصفحة
@@ -78,22 +117,94 @@
     window.location.href = "index.html";
   }
 
+  let doughnutChart = null;
+  let barChart = null;
+
   function loadDashboard() {
     const today = new Date().toISOString().split("T")[0];
 
-    fetch(`${API_URL}?action=dashboard&role=${user.role}&region=${user.region}&date=${today}`)
+    fetch(`${API_URL}?action=attendanceSummary&role=${user.role}&region=${user.region}&date=${today}`)
       .then(res => res.json())
-      .then(data => {
-        document.getElementById("total").textContent = data.totalAttendance;
-        document.getElementById("inCount").textContent = data.inCount;
-        document.getElementById("outCount").textContent = data.outCount;
+      .then(summary => {
+
+        // ===== Cards =====
+        let total = 0;
+        let present = 0;
+        let absent = 0;
+
+        Object.values(summary.departments).forEach(d => {
+          total += d.total;
+          present += d.present;
+          absent += d.absent;
+        });
+
+        document.getElementById("total").textContent = total;
+        document.getElementById("inCount").textContent = present;
+        document.getElementById("outCount").textContent = absent;
+
+        // ===== Doughnut Chart =====
+        if (doughnutChart) doughnutChart.destroy();
+        doughnutChart = new Chart(
+          document.getElementById("attendanceDoughnut"),
+          {
+            type: "doughnut",
+            data: {
+              labels: ["حضر", "غاب"],
+              datasets: [{
+                data: [present, absent],
+                backgroundColor: ["#22c55e", "#ef4444"]
+              }]
+            }
+          }
+        );
+
+        // ===== Bar Chart =====
+        const labels = Object.keys(summary.departments);
+        const presentData = labels.map(d => summary.departments[d].present);
+        const absentData = labels.map(d => summary.departments[d].absent);
+
+        if (barChart) barChart.destroy();
+        barChart = new Chart(
+          document.getElementById("attendanceBar"),
+          {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "حضر",
+                  data: presentData,
+                  backgroundColor: "#22c55e"
+                },
+                {
+                  label: "غاب",
+                  data: absentData,
+                  backgroundColor: "#ef4444"
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true }
+              }
+            }
+          }
+        );
+
       })
       .catch(() => {
         alert("خطأ في تحميل الداتا");
       });
   }
 
+  // أول تحميل
   loadDashboard();
+
+  // Live Update كل 10 ثواني
+  setInterval(loadDashboard, 10000);
+
 </script>
 
 </body>
