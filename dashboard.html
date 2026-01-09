@@ -7,6 +7,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <style>
 body {
   margin: 0;
@@ -25,17 +29,22 @@ header {
 
 .container { padding: 20px; }
 
+/* Loader */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  z-index: 999;
+  display: none;
+}
+
 .date-box {
   text-align: center;
   margin-bottom: 20px;
-}
-
-.date-box input {
-  background: #020617;
-  color: #fff;
-  border: 1px solid #334155;
-  padding: 8px 12px;
-  border-radius: 8px;
 }
 
 .cards {
@@ -70,11 +79,10 @@ header {
 .dept-card h4 {
   text-align: center;
   color: #c7d2fe;
-  margin-bottom: 10px;
 }
 
-.present { color: #22c55e; font-size: 13px; }
-.absent  { color: #ef4444; font-size: 13px; }
+.present { color: #22c55e; }
+.absent  { color: #ef4444; }
 
 .names {
   font-size: 12px;
@@ -85,31 +93,6 @@ header {
   max-height: 120px;
   overflow-y: auto;
 }
-
-.charts {
-  margin-top: 30px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.chart-box {
-  background: #0f172a;
-  padding: 20px;
-  border-radius: 12px;
-}
-
-/* ===== Loader ===== */
-#loader {
-  position: fixed;
-  inset: 0;
-  background: rgba(2,6,23,.85);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  z-index: 9999;
-}
 </style>
 </head>
 
@@ -117,40 +100,21 @@ header {
 
 <header>Attendance Dashboard</header>
 
-<!-- Loader -->
 <div id="loader">⏳ جاري تحميل البيانات…</div>
 
 <div class="container">
 
   <div class="date-box">
-    <input type="date" id="datePicker">
+    <input id="datePicker">
   </div>
 
   <div class="cards">
-    <div class="card">
-      <h3>إجمالي الحضور</h3>
-      <p id="total">-</p>
-    </div>
-    <div class="card">
-      <h3>حضر</h3>
-      <p id="inCount">-</p>
-    </div>
-    <div class="card">
-      <h3>غاب</h3>
-      <p id="outCount">-</p>
-    </div>
+    <div class="card"><h3>إجمالي المهندسين</h3><p id="total">-</p></div>
+    <div class="card"><h3>حضر</h3><p id="inCount">-</p></div>
+    <div class="card"><h3>غاب</h3><p id="outCount">-</p></div>
   </div>
 
   <div class="departments" id="departmentsBox"></div>
-
-  <div class="charts">
-    <div class="chart-box">
-      <canvas id="attendanceDoughnut"></canvas>
-    </div>
-    <div class="chart-box">
-      <canvas id="attendanceBar"></canvas>
-    </div>
-  </div>
 
 </div>
 
@@ -163,32 +127,31 @@ if (!user) location.href = "index.html";
 
 const loader = document.getElementById("loader");
 
-const dateInput = document.getElementById("datePicker");
-dateInput.value = new Date().toLocaleDateString("en-CA");
+flatpickr("#datePicker", {
+  defaultDate: "today",
+  dateFormat: "Y-m-d",
+  onChange: loadDashboard
+});
 
-let doughnutChart = null;
-let barChart = null;
-
-dateInput.addEventListener("change", loadDashboard);
-
-function loadDashboard() {
-  const date = dateInput.value;
+function loadDashboard(selectedDates, dateStr) {
+  const date = dateStr || new Date().toISOString().slice(0,10);
   loader.style.display = "flex";
 
   fetch(`${API_URL}?action=attendance&role=${user.role}&region=${user.region}&date=${date}`)
     .then(r => r.json())
     .then(rows => {
 
-      const allEmployees = {};
+      const seen = new Set();
       const presentSet = new Set();
+      const employees = {};
 
       rows.forEach(r => {
         if (!r.empId) return;
 
-        if (!allEmployees[r.empId]) {
-          allEmployees[r.empId] = {
-            name: r.name,                 // ✅ Sheet1 - Column H
-            department: r.department || "غير محدد"
+        if (!employees[r.empId]) {
+          employees[r.empId] = {
+            name: r.name,          // ✅ من Sheet1 عمود H
+            dept: r.department || "غير محدد"
           };
         }
 
@@ -198,25 +161,23 @@ function loadDashboard() {
       });
 
       const departments = {};
-
-      Object.entries(allEmployees).forEach(([id, emp]) => {
-        if (!departments[emp.department]) {
-          departments[emp.department] = { present: [], absent: [] };
-        }
-
-        if (presentSet.has(id)) {
-          departments[emp.department].present.push(emp.name);
-        } else {
-          departments[emp.department].absent.push(emp.name);
+      Object.values(employees).forEach(emp => {
+        if (!departments[emp.dept]) {
+          departments[emp.dept] = { present: [], absent: [] };
         }
       });
 
-      const presentCount = presentSet.size;
-      const absentCount  = TOTAL_EMPLOYEES - presentCount;
+      Object.entries(employees).forEach(([id, emp]) => {
+        if (presentSet.has(id)) {
+          departments[emp.dept].present.push(emp.name);
+        } else {
+          departments[emp.dept].absent.push(emp.name);
+        }
+      });
 
-      document.getElementById("total").textContent   = TOTAL_EMPLOYEES;
-      document.getElementById("inCount").textContent = presentCount;
-      document.getElementById("outCount").textContent= absentCount;
+      document.getElementById("total").textContent = TOTAL_EMPLOYEES;
+      document.getElementById("inCount").textContent = presentSet.size;
+      document.getElementById("outCount").textContent = TOTAL_EMPLOYEES - presentSet.size;
 
       const box = document.getElementById("departmentsBox");
       box.innerHTML = "";
@@ -236,44 +197,6 @@ function loadDashboard() {
         `;
       });
 
-      if (doughnutChart) doughnutChart.destroy();
-      doughnutChart = new Chart(attendanceDoughnut, {
-        type: "doughnut",
-        data: {
-          labels: ["حضر", "غاب"],
-          datasets: [{
-            data: [presentCount, absentCount],
-            backgroundColor: ["#22c55e", "#ef4444"]
-          }]
-        }
-      });
-
-      if (barChart) barChart.destroy();
-      barChart = new Chart(attendanceBar, {
-        type: "bar",
-        data: {
-          labels: Object.keys(departments),
-          datasets: [
-            {
-              label: "حضر",
-              data: Object.values(departments).map(d => d.present.length),
-              backgroundColor: "#22c55e"
-            },
-            {
-              label: "غاب",
-              data: Object.values(departments).map(d => d.absent.length),
-              backgroundColor: "#ef4444"
-            }
-          ]
-        },
-        options: {
-          scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
-        }
-      });
-
-      loader.style.display = "none";
-    })
-    .catch(() => {
       loader.style.display = "none";
     });
 }
