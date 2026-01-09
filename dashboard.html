@@ -183,7 +183,7 @@ header{
 <script>
 /* ================= HELPERS ================= */
 
-// قص الاسم للعرض فقط
+// تقصير الاسم (عرض فقط)
 function shortName(fullName){
   if(!fullName) return "";
   const p = fullName.trim().split(" ");
@@ -203,8 +203,40 @@ function formatTime(timeStr){
 /* ================= CONFIG ================= */
 const API_URL ="https://script.google.com/macros/s/AKfycbzRKmx-wDXrMwqUaPVTE7g0n_4Wdvi3gNdLbAJtj5KfrHRuHPh5Y86eNigBWrDXkBomWg/exec";
 
-/* (ENGINEER_DEPT كما هو بدون أي تغيير) */
-const ENGINEER_DEPT = { /* نفس البيانات */ };
+const ENGINEER_DEPT = {
+  "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
+  "Efat Youssef Assad Hanna":"شمال المنيا",
+  "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
+  "Ahmed Abdelnasser Mohamed Aly":"توريدات",
+  "Amr Abdullah Abdrabbo Hlhil":"آلى",
+  "Wael Ibrahim Eid Mohamed":"بنى سويف",
+  "Aly Aboseif Abdelbadea Aly Abosaif":"جنوب المنيا",
+  "Mahmoud Fathy Youssef Ismail":"بنى سويف",
+  "Hussien Kamel Abdelkarem Abdelelamam":"جنوب المنيا",
+  "Reda Mekhemar Abdelhamid Abdelhakim":"جنوب المنيا",
+  "Mohamed Khaled Mohamed Khaled":"توريدات",
+  "Alaaeldien Mohamed Soliman AbdelhAlym":"آلى",
+  "Afraim Shawky Mikhail Habashy":"شمال المنيا",
+  "Mohamed Hussien Mohamed Ahmed":"جنوب المنيا",
+  "Ahmed Abdelfattah Aly Aly":"بنى سويف",
+  "Mohamed Moustafa Abdelrahman Reyad":"جنوب المنيا",
+  "Abdullah Shaaban Saad Mourad":"بنى سويف",
+  "Elfarouk Mohamed Ahmed Mohamed":"متابعه",
+  "Essam Sayed Mohamed Seddik":"جنوب المنيا",
+  "Eltawab Mahmoud Aly Aboelhassan":"آلى",
+  "Ibrahim Abdelnaser Abdelshafy Abdellatif":"آلى",
+  "Mohamed Saeed Aboelhagag Hassan":"آلى",
+  "Ahmed Mohamed Farouk Abdelrheam":"بنى سويف",
+  "Ahmed Rabie Abdelrazik Hussien":"شمال المنيا",
+  "Mohamed Atef Mahmoud Elgeneidy":"بنى سويف",
+  "Ali Ahmed Hassan Hamed":"آلى",
+  "Assem Hassan Abdelshafy Hassan":"بنى سويف",
+  "Omar Metwally Ahmed Mohamed Salem":"آلى",
+  "Abdelmoneam Hassan Hafez Karrat":"آلى",
+  "Mahmoud Ramadan Mahmoud Abdelaziz":"آلى",
+  "Mahmoud Khaled":"جنوب المنيا",
+  "Mohamed Youssef":"شمال المنيا"
+};
 
 const ENGINEERS = Object.keys(ENGINEER_DEPT);
 const TOTAL = ENGINEERS.length;
@@ -285,12 +317,26 @@ function renderDepartments(deptData,presentSet){
 function drawCharts(deptData,inCount){
   if(barChart)barChart.destroy();
   if(pieChart)pieChart.destroy();
-  barChart=new Chart(deptChart,{type:"bar",
-    data:{labels:DEPARTMENTS,datasets:[{data:DEPARTMENTS.map(d=>deptData[d].length),backgroundColor:"#60a5fa"}]},
+  barChart=new Chart(deptChart,{
+    type:"bar",
+    data:{
+      labels:DEPARTMENTS,
+      datasets:[{
+        data:DEPARTMENTS.map(d=>deptData[d].length),
+        backgroundColor:"#60a5fa"
+      }]
+    },
     options:{plugins:{legend:{display:false}}}
   });
-  pieChart=new Chart(pieChartCanvas,{type:"pie",
-    data:{labels:["حضر","غاب"],datasets:[{data:[inCount,TOTAL-inCount],backgroundColor:["#60a5fa","#a5b4fc"]}]}
+  pieChart=new Chart(pieChartCanvas,{
+    type:"pie",
+    data:{
+      labels:["حضر","غاب"],
+      datasets:[{
+        data:[inCount,TOTAL-inCount],
+        backgroundColor:["#60a5fa","#a5b4fc"]
+      }]
+    }
   });
 }
 
