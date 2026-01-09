@@ -22,6 +22,21 @@
       font-size: 20px;
       font-weight: bold;
     }
+
+    .reload-box {
+      text-align: center;
+      margin: 15px 0;
+    }
+    .reload-box button {
+      padding: 10px 22px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #6366f1;
+      color: white;
+    }
+
     .container {
       padding: 20px;
     }
@@ -74,6 +89,11 @@
   Attendance Dashboard
 </header>
 
+<!-- زر Reload -->
+<div class="reload-box">
+  <button onclick="manualReload()">🔄 تحديث البيانات</button>
+</div>
+
 <div class="container">
 
   <!-- ===== Cards ===== -->
@@ -120,15 +140,14 @@
   let doughnutChart = null;
   let barChart = null;
 
-  function loadDashboard() {
-    // ✅ تاريخ محلي صحيح (حل مشكلة عدم التحديث)
+  function loadDashboard(force = false) {
     const today = new Date().toLocaleDateString("en-CA");
+    const cacheBuster = force ? `&_=${Date.now()}` : "";
 
-    fetch(`${API_URL}?action=attendanceSummary&role=${user.role}&region=${user.region}&date=${today}`)
+    fetch(`${API_URL}?action=attendanceSummary&role=${user.role}&region=${user.region}&date=${today}${cacheBuster}`)
       .then(res => res.json())
       .then(summary => {
 
-        // ===== Cards =====
         let total = 0;
         let present = 0;
         let absent = 0;
@@ -143,7 +162,7 @@
         document.getElementById("inCount").textContent = present;
         document.getElementById("outCount").textContent = absent;
 
-        // ===== Doughnut Chart =====
+        // Doughnut
         if (doughnutChart) doughnutChart.destroy();
         doughnutChart = new Chart(
           document.getElementById("attendanceDoughnut"),
@@ -159,7 +178,7 @@
           }
         );
 
-        // ===== Bar Chart =====
+        // Bar
         const labels = Object.keys(summary.departments);
         const presentData = labels.map(d => summary.departments[d].present);
         const absentData = labels.map(d => summary.departments[d].absent);
@@ -172,16 +191,8 @@
             data: {
               labels,
               datasets: [
-                {
-                  label: "حضر",
-                  data: presentData,
-                  backgroundColor: "#22c55e"
-                },
-                {
-                  label: "غاب",
-                  data: absentData,
-                  backgroundColor: "#ef4444"
-                }
+                { label: "حضر", data: presentData, backgroundColor: "#22c55e" },
+                { label: "غاب", data: absentData, backgroundColor: "#ef4444" }
               ]
             },
             options: {
@@ -193,17 +204,20 @@
             }
           }
         );
-
       })
       .catch(() => {
         alert("خطأ في تحميل الداتا");
       });
   }
 
+  function manualReload() {
+    loadDashboard(true);
+  }
+
   // أول تحميل
   loadDashboard();
 
-  // Live Update كل 10 ثواني
+  // Auto update كل 10 ثواني
   setInterval(loadDashboard, 10000);
 </script>
 
