@@ -57,7 +57,7 @@ header{
   font-weight:bold;
 }
 
-/* Charts Layout */
+/* Charts */
 .charts{
   display:grid;
   grid-template-columns:2fr 1fr;
@@ -68,12 +68,6 @@ header{
   background:#0f172a;
   padding:12px;
   border-radius:12px;
-}
-.chart-box h4{
-  margin:0 0 10px;
-  font-size:14px;
-  text-align:center;
-  color:#93c5fd;
 }
 
 /* Departments */
@@ -86,12 +80,6 @@ header{
   background:#0f172a;
   padding:12px;
   border-radius:12px;
-}
-.dept-card h4{
-  text-align:center;
-  font-size:14px;
-  margin:0 0 8px;
-  color:#c7d2fe;
 }
 .split{
   display:grid;
@@ -143,12 +131,10 @@ header{
 
 <div class="charts">
   <div class="chart-box">
-    <h4>الحضور حسب الإدارات</h4>
-    <canvas id="deptChart" height="160"></canvas>
+    <canvas id="deptChart"></canvas>
   </div>
   <div class="chart-box">
-    <h4>إجمالي اليوم</h4>
-    <canvas id="pieChartCanvas" height="160"></canvas>
+    <canvas id="pieChartCanvas"></canvas>
   </div>
 </div>
 
@@ -196,15 +182,15 @@ const ENGINEER_DEPT = {
   "Mohamed Youssef":"شمال المنيا"
 };
 
-const DEPARTMENTS = ["بنى سويف","شمال المنيا","توريدات","آلى","جنوب المنيا","متابعه"];
 const ENGINEERS = Object.keys(ENGINEER_DEPT);
 const TOTAL = ENGINEERS.length;
-
 document.getElementById("totalCount").textContent = TOTAL;
+
+const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
 
 let barChart = null;
 let pieChart = null;
-let lastINCount = 0;
+let lastSignature = "";
 
 /* ================= DATE ================= */
 const dateInput = document.getElementById("datePicker");
@@ -216,52 +202,57 @@ dateInput.addEventListener("change", loadDashboard);
 function loadDashboard(){
   const selectedDate = dateInput.value;
 
-  fetch(`${API_URL}?action=attendance&date=${selectedDate}`)
+  fetch(`${API_URL}?action=attendance&role=admin&region=ALL&date=${selectedDate}`)
     .then(r => r.json())
     .then(rows => {
       if (!Array.isArray(rows)) return;
-
-      rows = rows.filter(r => r.date === selectedDate);
 
       const presentSet = new Set();
       const deptData = {};
       DEPARTMENTS.forEach(d => deptData[d] = []);
 
-      rows.forEach(r => {
+      const todayRows = rows.filter(r => r.date === selectedDate);
+
+      todayRows.forEach(r => {
         if (r.status === "IN" && ENGINEER_DEPT[r.name]) {
           presentSet.add(r.name);
-          deptData[ENGINEER_DEPT[r.name]].push({
-            name: r.name,
-            location: r.location || "-",
-            time: r.time || "-"
-          });
+          deptData[ENGINEER_DEPT[r.name]].push(r);
         }
       });
 
       document.getElementById("inCount").textContent = presentSet.size;
       document.getElementById("outCount").textContent = TOTAL - presentSet.size;
 
-      lastINCount = presentSet.size;
-
+      updateLastSignature(todayRows);
       renderDepartments(deptData, presentSet);
       drawCharts(deptData, presentSet.size);
     });
 }
 
-/* ================= LIVE CHECKER ================= */
+/* ================= LIVE ================= */
+function updateLastSignature(rows){
+  const inRows = rows.filter(r => r.status === "IN");
+  if (!inRows.length) return;
+
+  const last = inRows[inRows.length - 1];
+  lastSignature = `${last.name}|${last.time}|${last.location}`;
+}
+
 function checkForLiveUpdate(){
   if (dateInput.value !== today) return;
 
-  fetch(`${API_URL}?action=attendance&date=${today}`)
+  fetch(`${API_URL}?action=attendance&role=admin&region=ALL&date=${today}`)
     .then(r => r.json())
     .then(rows => {
       if (!Array.isArray(rows)) return;
 
-      const todayIN = rows.filter(r =>
-        r.date === today && r.status === "IN"
-      ).length;
+      const inRows = rows.filter(r => r.date === today && r.status === "IN");
+      if (!inRows.length) return;
 
-      if (todayIN > lastINCount) {
+      const last = inRows[inRows.length - 1];
+      const currentSignature = `${last.name}|${last.time}|${last.location}`;
+
+      if (currentSignature !== lastSignature) {
         loadDashboard();
       }
     });
@@ -274,7 +265,7 @@ function renderDepartments(deptData, presentSet){
 
   DEPARTMENTS.forEach(dept => {
     const allDeptEngineers = ENGINEERS.filter(e => ENGINEER_DEPT[e] === dept);
-    const presentNames = deptData[dept].map(x => x.name);
+    const present = deptData[dept].map(x => x.name);
     const absent = allDeptEngineers.filter(e => !presentSet.has(e));
 
     box.innerHTML += `
@@ -282,7 +273,7 @@ function renderDepartments(deptData, presentSet){
         <h4>${dept}</h4>
         <div class="split">
           <div class="box">
-            <b>حضر (${presentNames.length})</b>
+            <b>حضر (${present.length})</b>
             ${deptData[dept].map(p => `
               <div class="att-row">
                 <span class="att-name">${p.name}</span>
@@ -301,7 +292,7 @@ function renderDepartments(deptData, presentSet){
   });
 }
 
-/* ================= Charts ================= */
+/* ================= CHARTS ================= */
 function drawCharts(deptData, inCount){
   if (barChart) barChart.destroy();
   if (pieChart) pieChart.destroy();
@@ -315,13 +306,7 @@ function drawCharts(deptData, inCount){
         backgroundColor:"#60a5fa"
       }]
     },
-    options:{
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ticks:{color:"#e5e7eb"}},
-        y:{ticks:{color:"#e5e7eb"}}
-      }
-    }
+    options:{plugins:{legend:{display:false}}}
   });
 
   pieChart = new Chart(document.getElementById("pieChartCanvas"),{
@@ -332,16 +317,12 @@ function drawCharts(deptData, inCount){
         data:[inCount, TOTAL - inCount],
         backgroundColor:["#60a5fa","#a5b4fc"]
       }]
-    },
-    options:{
-      plugins:{legend:{position:"bottom",labels:{color:"#e5e7eb"}}}
     }
   });
 }
 
 /* ================= AUTO ================= */
 setInterval(checkForLiveUpdate, 10000);
-
 loadDashboard();
 </script>
 
