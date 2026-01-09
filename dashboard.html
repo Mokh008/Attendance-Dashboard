@@ -59,7 +59,6 @@ header{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
-  margin-top:10px;
 }
 .box{
   background:#020617;
@@ -67,26 +66,36 @@ header{
   padding:10px;
   font-size:13px;
 }
-.box h5{
-  margin:0 0 8px;
-  color:#93c5fd;
-}
 .att-row{
   display:flex;
-  gap:10px;
+  gap:8px;
   padding:6px 0;
   border-bottom:1px dashed #1e293b;
-  align-items:center;
-  font-size:12.5px;
 }
 .att-name{flex:2}
 .att-loc{flex:1;color:#93c5fd}
-.att-time{flex:0;color:#c7d2fe}
+.att-time{color:#c7d2fe}
+
+/* ===== Loader ===== */
+#loader{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,23,.95);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  z-index:999;
+}
+.hidden{display:none}
+
 canvas{margin-top:30px}
 </style>
 </head>
 
 <body>
+
+<div id="loader">⏳ جاري تحميل البيانات...</div>
 
 <header>Attendance Dashboard</header>
 
@@ -97,184 +106,140 @@ canvas{margin-top:30px}
 </div>
 
 <div class="cards">
-  <div class="card"><h3>إجمالي المهندسين</h3><p id="totalCount">0</p></div>
+  <div class="card"><h3>إجمالي المهندسين</h3><p id="total">32</p></div>
   <div class="card"><h3>حضر</h3><p id="inCount">0</p></div>
   <div class="card"><h3>غاب</h3><p id="outCount">0</p></div>
 </div>
 
 <canvas id="deptChart" height="120"></canvas>
+<canvas id="pieChart" height="120"></canvas>
 
 <div class="departments" id="departmentsBox"></div>
 
 </div>
 
 <script>
-/* ================== CONFIG ================== */
+/* ================= CONFIG ================= */
+const API_URL="https://script.google.com/macros/s/AKfycby9We83tXmtxG_1ykdriEXyASO_685z1ieBrMb9HJpRdEYs8KXhzAkjFyaCchjgwoQAzg/exec";
 
-const API_URL =
-"https://script.google.com/macros/s/AKfycby9We83tXmtxG_1ykdriEXyASO_685z1ieBrMb9HJpRdEYs8KXhzAkjFyaCchjgwoQAzg/exec";
+const ENGINEER_DEPT={/* نفس الخريطة اللي اتفقنا عليها */};
+const DEPARTMENTS=["بنى سويف","شمال المنيا","توريدات","آلى","جنوب المنيا","متابعه"];
+const ENGINEERS=Object.keys(ENGINEER_DEPT);
+const TOTAL=ENGINEERS.length;
 
-/* Engineer → Department (FIXED SOURCE OF TRUTH) */
-const ENGINEER_DEPT = {
-  "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
-  "Efat Youssef Assad Hanna":"شمال المنيا",
-  "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
-  "Ahmed Abdelnasser Mohamed Aly":"توريدات",
-  "Amr Abdullah Abdrabbo Hlhil":"آلى",
-  "Wael Ibrahim Eid Mohamed":"بنى سويف",
-  "Aly Aboseif Abdelbadea Aly Abosaif":"جنوب المنيا",
-  "Mahmoud Fathy Youssef Ismail":"بنى سويف",
-  "Hussien Kamel Abdelkarem Abdelelamam":"جنوب المنيا",
-  "Reda Mekhemar Abdelhamid Abdelhakim":"جنوب المنيا",
-  "Mohamed Khaled Mohamed Khaled":"توريدات",
-  "Alaaeldien Mohamed Soliman AbdelhAlym":"آلى",
-  "Afraim Shawky Mikhail Habashy":"شمال المنيا",
-  "Mohamed Hussien Mohamed Ahmed":"جنوب المنيا",
-  "Ahmed Abdelfattah Aly Aly":"بنى سويف",
-  "Mohamed Moustafa Abdelrahman Reyad":"جنوب المنيا",
-  "Abdullah Shaaban Saad Mourad":"بنى سويف",
-  "Elfarouk Mohamed Ahmed Mohamed":"متابعه",
-  "Essam Sayed Mohamed Seddik":"جنوب المنيا",
-  "Eltawab Mahmoud Aly Aboelhassan":"آلى",
-  "Ibrahim Abdelnaser Abdelshafy Abdellatif":"آلى",
-  "Mohamed Saeed Aboelhagag Hassan":"آلى",
-  "Ahmed Mohamed Farouk Abdelrheam":"بنى سويف",
-  "Ahmed Rabie Abdelrazik Hussien":"شمال المنيا",
-  "Mohamed Atef Mahmoud Elgeneidy":"بنى سويف",
-  "Ali Ahmed Hassan Hamed":"آلى",
-  "Assem Hassan Abdelshafy Hassan":"بنى سويف",
-  "Omar Metwally Ahmed Mohamed Salem":"آلى",
-  "Abdelmoneam Hassan Hafez Karrat":"آلى",
-  "Mahmoud Ramadan Mahmoud Abdelaziz":"آلى",
-  "Mahmoud Khaled":"جنوب المنيا",
-  "Mohamed Youssef":"شمال المنيا"
-};
+let barChart,pieChart;
 
-const DEPARTMENTS = [
-  "بنى سويف",
-  "شمال المنيا",
-  "توريدات",
-  "آلى",
-  "جنوب المنيا",
-  "متابعه"
-];
+/* ================= DATE ================= */
+const dateInput=document.getElementById("datePicker");
+const today=new Date().toLocaleDateString("en-CA");
+dateInput.value=today;
+dateInput.addEventListener("change",loadDashboard);
 
-const ENGINEERS = Object.keys(ENGINEER_DEPT);
-const TOTAL = ENGINEERS.length;
+/* ================= MAIN ================= */
+function showLoader(){document.getElementById("loader").classList.remove("hidden")}
+function hideLoader(){document.getElementById("loader").classList.add("hidden")}
 
-document.getElementById("totalCount").textContent = TOTAL;
-
-let chart;
-
-/* ================== DATE ================== */
-const dateInput = document.getElementById("datePicker");
-dateInput.value = new Date().toLocaleDateString("en-CA");
-dateInput.addEventListener("change", loadDashboard);
-
-/* ================== MAIN ================== */
 function loadDashboard(){
-  const selectedDate = dateInput.value;
+  showLoader();
+  const selectedDate=dateInput.value;
 
   fetch(`${API_URL}?action=attendance&date=${selectedDate}`)
-    .then(r=>r.json())
-    .then(rows=>{
+  .then(r=>r.json())
+  .then(rows=>{
+    rows=rows.filter(r=>r.date===selectedDate);
 
-      /* Filter ONLY selected date */
-      rows = rows.filter(r => r.date === selectedDate);
+    const presentSet=new Set();
+    const deptData={};
+    DEPARTMENTS.forEach(d=>deptData[d]=[]);
 
-      const presentSet = new Set();
-      const deptPresent = {};
-      DEPARTMENTS.forEach(d=>deptPresent[d]=[]);
-
-      rows.forEach(r=>{
-        if(r.status==="IN" && ENGINEER_DEPT[r.name]){
-          presentSet.add(r.name);
-          const dept = ENGINEER_DEPT[r.name];
-          deptPresent[dept].push({
-            name:r.name,
-            location:r.location || "-",
-            time:r.time || "-"
-          });
-        }
-      });
-
-      document.getElementById("inCount").textContent = presentSet.size;
-      document.getElementById("outCount").textContent = TOTAL - presentSet.size;
-
-      renderDepartments(deptPresent, presentSet);
+    rows.forEach(r=>{
+      if(r.status==="IN" && ENGINEER_DEPT[r.name]){
+        presentSet.add(r.name);
+        deptData[ENGINEER_DEPT[r.name]].push({
+          name:r.name,
+          location:r.location||"-",
+          time:r.time||"-"
+        });
+      }
     });
+
+    document.getElementById("inCount").textContent=presentSet.size;
+    document.getElementById("outCount").textContent=TOTAL-presentSet.size;
+
+    renderDepartments(deptData,presentSet);
+    drawCharts(deptData,presentSet.size);
+
+    hideLoader();
+  });
 }
 
-/* ================== UI ================== */
-function renderDepartments(deptPresent, presentSet){
-  const box = document.getElementById("departmentsBox");
+/* ================= UI ================= */
+function renderDepartments(deptData,presentSet){
+  const box=document.getElementById("departmentsBox");
   box.innerHTML="";
 
-  const chartIn=[], chartOut=[];
-
   DEPARTMENTS.forEach(dept=>{
-    const allDeptEngineers =
-      ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
+    const all=ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
+    const present=deptData[dept].map(x=>x.name);
+    const absent=all.filter(e=>!presentSet.has(e));
 
-    const present = deptPresent[dept].map(x=>x.name);
-    const absent =
-      allDeptEngineers.filter(e=>!presentSet.has(e));
-
-    chartIn.push(present.length);
-    chartOut.push(absent.length);
-
-    box.innerHTML += `
+    box.innerHTML+=`
     <div class="dept-card">
       <h4>${dept}</h4>
       <div class="split">
         <div class="box">
-          <h5>حضر (${present.length})</h5>
-          ${
-            deptPresent[dept].map(p=>`
-              <div class="att-row">
-                <span class="att-name">${p.name}</span>
-                <span class="att-loc">📍 ${p.location}</span>
-                <span class="att-time">⏰ ${p.time}</span>
-              </div>
-            `).join("") || "-"
-          }
+          <b>حضر (${present.length})</b>
+          ${deptData[dept].map(p=>`
+            <div class="att-row">
+              <span class="att-name">${p.name}</span>
+              <span class="att-loc">📍 ${p.location}</span>
+              <span class="att-time">⏰ ${p.time}</span>
+            </div>`).join("")||"-"}
         </div>
         <div class="box">
-          <h5>غاب (${absent.length})</h5>
-          ${absent.join("<br>") || "-"}
+          <b>غاب (${absent.length})</b><br>
+          ${absent.join("<br>")}
         </div>
       </div>
     </div>`;
   });
-
-  drawChart(chartIn, chartOut);
 }
 
-/* ================== CHART ================== */
-function drawChart(inData, outData){
-  if(chart) chart.destroy();
+/* ================= Charts ================= */
+function drawCharts(deptData,inCount){
+  if(barChart) barChart.destroy();
+  if(pieChart) pieChart.destroy();
 
-  chart = new Chart(document.getElementById("deptChart"),{
+  barChart=new Chart(deptChart,{
     type:"bar",
     data:{
       labels:DEPARTMENTS,
-      datasets:[
-        {label:"حضر", data:inData, backgroundColor:"#60a5fa"},
-        {label:"غاب", data:outData, backgroundColor:"#a5b4fc"}
-      ]
-    },
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{labels:{color:"#e5e7eb"}}
-      },
-      scales:{
-        x:{ticks:{color:"#e5e7eb"}},
-        y:{ticks:{color:"#e5e7eb"}}
-      }
+      datasets:[{
+        label:"حضر",
+        data:DEPARTMENTS.map(d=>deptData[d].length),
+        backgroundColor:"#60a5fa"
+      }]
+    }
+  });
+
+  pieChart=new Chart(pieChart,{
+    type:"pie",
+    data:{
+      labels:["حضر","غاب"],
+      datasets:[{
+        data:[inCount,TOTAL-inCount],
+        backgroundColor:["#60a5fa","#a5b4fc"]
+      }]
     }
   });
 }
+
+/* ================= AUTO REFRESH ================= */
+setInterval(()=>{
+  if(dateInput.value===today){
+    loadDashboard();
+  }
+},30000);
 
 loadDashboard();
 </script>
