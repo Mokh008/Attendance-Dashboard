@@ -22,12 +22,8 @@
       font-size: 20px;
       font-weight: bold;
     }
+    .container { padding: 20px; }
 
-    .container {
-      padding: 20px;
-    }
-
-    /* ===== Summary Cards ===== */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -39,11 +35,7 @@
       border-radius: 12px;
       text-align: center;
     }
-    .card h3 {
-      margin: 0;
-      font-size: 14px;
-      color: #94a3b8;
-    }
+    .card h3 { margin: 0; font-size: 14px; color: #94a3b8; }
     .card p {
       margin-top: 10px;
       font-size: 26px;
@@ -51,47 +43,32 @@
       color: #6366f1;
     }
 
-    /* ===== Department Cards ===== */
     .departments {
       margin-top: 30px;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 15px;
     }
-
     .dept-card {
       background: #0f172a;
       padding: 15px;
       border-radius: 12px;
     }
-
     .dept-card h4 {
       margin: 0 0 10px;
       font-size: 15px;
       color: #c7d2fe;
       text-align: center;
     }
-
     .dept-stats {
       display: flex;
       justify-content: space-between;
       margin-bottom: 10px;
       font-size: 13px;
     }
-
     .present { color: #22c55e; }
     .absent { color: #ef4444; }
 
-    .names {
-      font-size: 12px;
-      line-height: 1.6;
-      max-height: 120px;
-      overflow-y: auto;
-      border-top: 1px solid #1e293b;
-      padding-top: 8px;
-    }
-
-    /* ===== Charts ===== */
     .charts {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -113,16 +90,14 @@
 
 <body>
 
-<header>
-  Attendance Dashboard
-</header>
+<header>Attendance Dashboard</header>
 
 <div class="container">
 
-  <!-- ===== Summary Cards ===== -->
+  <!-- Summary -->
   <div class="cards">
     <div class="card">
-      <h3>إجمالي الموظفين</h3>
+      <h3>إجمالي الحضور</h3>
       <p id="total">-</p>
     </div>
     <div class="card">
@@ -135,16 +110,15 @@
     </div>
   </div>
 
-  <!-- ===== Department Cards ===== -->
+  <!-- Departments -->
   <div class="departments" id="departmentsBox"></div>
 
-  <!-- ===== Charts ===== -->
+  <!-- Charts -->
   <div class="charts">
     <div class="chart-box">
       <h3>الحضور اليوم</h3>
       <canvas id="attendanceDoughnut"></canvas>
     </div>
-
     <div class="chart-box">
       <h3>الحضور حسب الإدارة</h3>
       <canvas id="attendanceBar"></canvas>
@@ -156,7 +130,6 @@
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycby9We83tXmtxG_1ykdriEXyASO_685z1ieBrMb9HJpRdEYs8KXhzAkjFyaCchjgwoQAzg/exec";
 
-  // حماية
   const user = JSON.parse(sessionStorage.getItem("user"));
   if (!user) location.href = "index.html";
 
@@ -166,42 +139,33 @@
   function loadDashboard() {
     const today = new Date().toLocaleDateString("en-CA");
 
-    fetch(`${API_URL}?action=attendanceSummary&role=${user.role}&region=${user.region}&date=${today}`)
+    fetch(`${API_URL}?action=dashboard&role=${user.role}&region=${user.region}&date=${today}`)
       .then(res => res.json())
-      .then(summary => {
+      .then(data => {
 
-        let total = 0, present = 0, absent = 0;
+        const total   = data.totalAttendance || 0;
+        const present = data.inCount || 0;
+        const absent  = data.outCount || 0;
+
+        document.getElementById("total").textContent   = total;
+        document.getElementById("inCount").textContent = present;
+        document.getElementById("outCount").textContent= absent;
+
         const deptBox = document.getElementById("departmentsBox");
         deptBox.innerHTML = "";
 
-        Object.entries(summary.departments).forEach(([dept, d]) => {
-          total += d.total;
-          present += d.present;
-          absent += d.absent;
-
+        Object.entries(data.byDepartment || {}).forEach(([dept, count]) => {
           deptBox.innerHTML += `
             <div class="dept-card">
               <h4>${dept}</h4>
               <div class="dept-stats">
-                <span class="present">✔ حضر: ${d.present}</span>
-                <span class="absent">✖ غاب: ${d.absent}</span>
-              </div>
-              <div class="names">
-                <strong class="present">الحاضرين:</strong><br>
-                ${(d.presentNames || []).join("، ") || "-"}
-                <br><br>
-                <strong class="absent">الغايبين:</strong><br>
-                ${(d.absentNames || []).join("، ") || "-"}
+                <span class="present">✔ حضر: ${count}</span>
+                <span class="absent">✖ غاب: -</span>
               </div>
             </div>
           `;
         });
 
-        document.getElementById("total").textContent = total;
-        document.getElementById("inCount").textContent = present;
-        document.getElementById("outCount").textContent = absent;
-
-        // Doughnut
         if (doughnutChart) doughnutChart.destroy();
         doughnutChart = new Chart(attendanceDoughnut, {
           type: "doughnut",
@@ -214,32 +178,22 @@
           }
         });
 
-        // Bar
-        const labels = Object.keys(summary.departments);
         if (barChart) barChart.destroy();
         barChart = new Chart(attendanceBar, {
           type: "bar",
           data: {
-            labels,
-            datasets: [
-              { label: "حضر", data: labels.map(l => summary.departments[l].present), backgroundColor: "#22c55e" },
-              { label: "غاب", data: labels.map(l => summary.departments[l].absent), backgroundColor: "#ef4444" }
-            ]
-          },
-          options: {
-            scales: {
-              x: { stacked: true },
-              y: { stacked: true, beginAtZero: true }
-            }
+            labels: Object.keys(data.byDepartment || {}),
+            datasets: [{
+              label: "الحضور",
+              data: Object.values(data.byDepartment || {}),
+              backgroundColor: "#22c55e"
+            }]
           }
         });
       });
   }
 
-  // تحميل أول مرة
   loadDashboard();
-
-  // تحديث تلقائي كل 10 ثواني
   setInterval(loadDashboard, 10000);
 </script>
 
