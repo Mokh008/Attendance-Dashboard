@@ -5,6 +5,7 @@
 <title>Attendance Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 /* ================= THEME ================= */
 :root{
@@ -205,6 +206,19 @@ header{
 <div class="departments" id="departmentsBox"></div>
 
 </div>
+
+<!-- ================= TEMP ACCESS (NO LOGIN) ================= -->
+<script>
+/*
+  دخول مؤقت بدون Login
+  بعد ما نعمل Login Portal جديد:
+  - الجزء ده يتشال
+  - ويتربط بـ Token / Session
+*/
+const USER_ROLE   = "sector_manager"; // يشوف كل الإدارات
+const USER_REGION = "ALL";            // كل المناطق
+</script>
+<!-- ========================================================== -->
 
 <script>
 /* ================= HELPERS ================= */
