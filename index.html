@@ -17,7 +17,7 @@ if(!AUTH_RAW){
 
 const AUTH_USER = JSON.parse(AUTH_RAW);
 
-/* ✅ NORMALIZE VALUES */
+/* ✅ NORMALIZE VALUES (الحل النهائي) */
 const USER_ROLE   = (AUTH_USER.role   || "").trim().toLowerCase();
 const USER_REGION = (AUTH_USER.region || "").trim().toUpperCase();
 </script>
@@ -238,9 +238,87 @@ function formatSheetTime(t){
 }
 
 /* ================= CONFIG ================= */
-const API_URL ="https://script.google.com/macros/s/AKfycbxIgXuR49qtScbiR5iMfsH_k0qD4Dy59-pf3P_BzrATqNHJ9DTv7BnwRghCxX63GukZvQ/exec";
+const API_URL ="https://script.google.com/macros/s/AKfycbyEukr4oxIwnZSy_NOl00i9zSjIlSox4Va-sNxBsAzyfzkCQg9Ikj-tKdlgkTj17yVlIA/exec";
 
-/* ===== باقي الإعدادات كما هي بدون أي تغيير ===== */
+const ENGINEER_DEPT = {
+  "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
+  "Efat Youssef Assad Hanna":"شمال المنيا",
+  "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
+  "Ahmed Abdelnasser Mohamed Aly":"توريدات",
+  "Amr Abdullah Abdrabbo Hlhil":"آلى",
+  "Wael Ibrahim Eid Mohamed":"بنى سويف",
+  "Aly Aboseif Abdelbadea Aly Abosaif":"جنوب المنيا",
+  "Mahmoud Fathy Youssef Ismail":"بنى سويف",
+  "Hussien Kamel Abdelkarem Abdelelamam":"جنوب المنيا",
+  "Reda Mekhemar Abdelhamid Abdelhakim":"جنوب المنيا",
+  "Mohamed Khaled Mohamed Khaled":"توريدات",
+  "Alaaeldien Mohamed Soliman AbdelhAlym":"آلى",
+  "Afraim Shawky Mikhail Habashy":"شمال المنيا",
+  "Mohamed Hussien Mohamed Ahmed":"جنوب المنيا",
+  "Ahmed Abdelfattah Aly Aly":"بنى سويف",
+  "Mohamed Moustafa Abdelrahman Reyad":"جنوب المنيا",
+  "Abdullah Shaaban Saad Mourad":"بنى سويف",
+  "Elfarouk Mohamed Ahmed Mohamed":"متابعه",
+  "Essam Sayed Mohamed Seddik":"جنوب المنيا",
+  "Eltawab Mahmoud Aly Aboelhassan":"آلى",
+  "Ibrahim Abdelnaser Abdelshafy Abdellatif":"آلى",
+  "Mohamed Saeed Aboelhagag Hassan":"آلى",
+  "Ahmed Mohamed Farouk Abdelrheam":"بنى سويف",
+  "Ahmed Rabie Abdelrazik Hussien":"شمال المنيا",
+  "Mohamed Atef Mahmoud Elgeneidy":"بنى سويف",
+  "Ali Ahmed Hassan Hamed":"آلى",
+  "Assem Hassan Abdelshafy Hassan":"بنى سويف",
+  "Omar Metwally Ahmed Mohamed Salem":"آلى",
+  "Abdelmoneam Hassan Hafez Karrat":"آلى",
+  "Mahmoud Ramadan Mahmoud Abdelaziz":"آلى",
+  "Mahmoud Khaled":"جنوب المنيا",
+  "Mohamed Youssef":"شمال المنيا"
+};
+
+const ENGINEERS = Object.keys(ENGINEER_DEPT);
+
+const VISIBLE_ENGINEERS =
+  USER_REGION === "ALL"
+    ? ENGINEERS
+    : ENGINEERS.filter(e => ENGINEER_DEPT[e] === USER_REGION);
+
+const TOTAL = VISIBLE_ENGINEERS.length;
+totalCount.textContent = TOTAL;
+
+const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
+
+let barChart=null, pieChart=null;
+
+/* ================= DATE ================= */
+const dateInput=document.getElementById("datePicker");
+const today=new Date().toLocaleDateString("en-CA");
+dateInput.value=today;
+dateInput.addEventListener("change",loadDashboard);
+
+/* ================= LOAD ================= */
+function loadDashboard(){
+  const d=dateInput.value;
+  fetch(`${API_URL}?action=attendance&role=${USER_ROLE}&region=${USER_REGION}&date=${d}`)
+  .then(r=>r.json()).then(rows=>{
+    if(!Array.isArray(rows))return;
+
+    const presentSet=new Set();
+    const deptData={};
+    DEPARTMENTS.forEach(x=>deptData[x]=[]);
+
+    rows.filter(r=>r.status==="IN").forEach(r=>{
+      if(!ENGINEER_DEPT[r.name]) return;
+      presentSet.add(r.name);
+      deptData[ENGINEER_DEPT[r.name]].push(r);
+    });
+
+    inCount.textContent=presentSet.size;
+    outCount.textContent=TOTAL-presentSet.size;
+
+    renderDepartments(deptData,presentSet);
+    drawCharts(deptData,presentSet.size);
+  });
+}
 
 /* ================= UI ================= */
 function renderDepartments(deptData,presentSet){
@@ -263,7 +341,7 @@ function renderDepartments(deptData,presentSet){
           ${deptData[dept].map(p=>`
             <div class="att-row">
               <span class="att-name">${shortName(p.name)}</span>
-              <span class="att-loc">📍 ${p.location || "-"}</span>
+              <span class="att-loc">📍 ${p.region}</span>
               <span class="att-time">⏰ ${formatSheetTime(p.time)}</span>
             </div>
           `).join("") || "-"}
@@ -276,6 +354,40 @@ function renderDepartments(deptData,presentSet){
     </div>`;
   });
 }
+
+/* ================= CHARTS ================= */
+function drawCharts(deptData,inCount){
+  if(barChart)barChart.destroy();
+  if(pieChart)pieChart.destroy();
+
+  const CHART_DEPTS =
+    USER_REGION === "ALL" ? DEPARTMENTS : [USER_REGION];
+
+  barChart=new Chart(deptChart,{
+    type:"bar",
+    data:{
+      labels:CHART_DEPTS,
+      datasets:[{
+        data:CHART_DEPTS.map(d=>deptData[d]?.length || 0),
+        backgroundColor:"#38bdf8"
+      }]
+    },
+    options:{plugins:{legend:{display:false}}}
+  });
+
+  pieChart=new Chart(pieChartCanvas,{
+    type:"pie",
+    data:{
+      labels:["حضر","غاب"],
+      datasets:[{
+        data:[inCount,TOTAL-inCount],
+        backgroundColor:["#38bdf8","#818cf8"]
+      }]
+    }
+  });
+}
+
+loadDashboard();
 </script>
 
 </body>
