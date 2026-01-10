@@ -7,150 +7,131 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-/* ================= THEME ================= */
-:root{
-  --bg-main:#020617;
-  --bg-card:#0b1224;
-  --bg-soft:#020617;
-  --border:#1e293b;
-  --text-main:#e5e7eb;
-  --text-soft:#94a3b8;
-  --primary:#38bdf8;
-  --secondary:#818cf8;
-}
-
-/* ================= BASE ================= */
 body{
   margin:0;
   font-family:"Segoe UI",Tahoma,sans-serif;
-  background:radial-gradient(circle at top,#0f172a,#020617 60%);
-  color:var(--text-main);
+  background:#020617;
+  color:#e5e7eb;
 }
 header{
-  background:linear-gradient(90deg,#020617,#0f172a,#020617);
-  padding:14px;
+  background:#0f172a;
+  padding:12px;
   text-align:center;
   font-size:18px;
   font-weight:bold;
-  border-bottom:1px solid var(--border);
 }
-.container{padding:18px}
+.container{padding:16px}
 
-/* ================= DATE ================= */
-.date-box{text-align:center;margin-bottom:16px}
+/* Date */
+.date-box{text-align:center;margin-bottom:12px}
 .date-box input{
-  background:var(--bg-card);
+  background:#020617;
   color:#fff;
-  border:1px solid var(--border);
-  padding:8px 14px;
-  border-radius:10px;
+  border:1px solid #334155;
+  padding:6px 12px;
+  border-radius:8px;
   font-size:14px;
-  outline:none;
-}
-.date-box input:focus{
-  border-color:var(--primary);
 }
 
-/* ================= KPI ================= */
+/* KPI Cards */
 .cards{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:14px;
+  gap:12px;
   margin-bottom:18px;
 }
 .card{
-  background:linear-gradient(160deg,#0b1224,#020617);
+  background:#0f172a;
   padding:14px;
-  border-radius:16px;
+  border-radius:12px;
   text-align:center;
-  border:1px solid var(--border);
+  border:1px solid #1e293b;
 }
 .card h3{
   margin:0;
   font-size:14px;
-  color:var(--text-soft);
+  color:#c7d2fe;
 }
 .card p{
   margin-top:6px;
-  font-size:26px;
+  font-size:24px;
   font-weight:bold;
-  color:var(--primary);
 }
 
-/* ================= CHARTS ================= */
+/* Charts */
 .charts{
   display:grid;
   grid-template-columns:2fr 1fr;
   gap:16px;
-  margin-bottom:22px;
+  margin-bottom:20px;
 }
 .chart-box{
-  background:var(--bg-card);
+  background:#0f172a;
   padding:14px;
-  border-radius:16px;
-  border:1px solid var(--border);
+  border-radius:14px;
+  border:1px solid #1e293b;
 }
 
-/* ================= DEPARTMENTS ================= */
+/* Departments */
 .departments{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(540px,1fr));
   gap:18px;
 }
 .dept-card{
-  background:linear-gradient(145deg,#0b1224,#020617);
-  padding:16px;
-  border-radius:18px;
-  border:1px solid var(--border);
+  background:#020617;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid #1e293b;
 }
 .dept-card h4{
-  margin:0 0 12px;
-  font-size:16px;
+  margin:0 0 10px;
+  font-size:15px;
   color:#e0e7ff;
 }
 
-/* ================= SPLIT ================= */
+/* Split */
 .split{
   display:grid;
-  grid-template-columns:2.3fr 0.9fr;
-  gap:14px;
+  grid-template-columns:2.2fr 0.8fr;
+  gap:12px;
 }
 
-/* ================= BOX ================= */
+/* Box */
 .box{
-  background:var(--bg-soft);
-  border-radius:14px;
-  padding:12px;
+  background:#020617;
+  border-radius:10px;
+  padding:10px;
   font-size:13px;
-  max-height:300px;
+  max-height:280px;
   overflow:auto;
 }
 .box b{
   display:block;
-  margin-bottom:8px;
-  color:var(--primary);
+  margin-bottom:6px;
+  color:#93c5fd;
 }
 
-/* ================= ROW ================= */
+/* Attendance Row */
 .att-row{
   display:grid;
   grid-template-columns:2.2fr 3fr 0.8fr;
   align-items:center;
-  gap:10px;
-  padding:8px 0;
-  border-bottom:1px dashed var(--border);
+  gap:8px;
+  padding:6px 0;
+  border-bottom:1px dashed #1e293b;
 }
 .att-row:last-child{border-bottom:none}
 
 .att-name{
-  font-weight:600;
+  font-weight:500;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .att-loc{
-  color:#7dd3fc;
-  font-size:13px;
+  color:#93c5fd;
+  font-size:12px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -158,19 +139,14 @@ header{
 .att-time{
   text-align:right;
   font-size:12px;
-  font-weight:600;
-  color:#fff;
-  background:linear-gradient(135deg,#2563eb,#38bdf8);
-  padding:4px 8px;
-  border-radius:8px;
+  color:#c7d2fe;
   white-space:nowrap;
 }
 
-/* ================= ABSENT ================= */
+/* Absent */
 .absent-name{
   display:block;
-  padding:3px 0;
-  color:#cbd5f5;
+  padding:2px 0;
 }
 </style>
 </head>
@@ -186,9 +162,18 @@ header{
 </div>
 
 <div class="cards">
-  <div class="card"><h3>إجمالي المهندسين</h3><p id="totalCount">0</p></div>
-  <div class="card"><h3>حضر</h3><p id="inCount">0</p></div>
-  <div class="card"><h3>غاب</h3><p id="outCount">0</p></div>
+  <div class="card">
+    <h3>إجمالي المهندسين</h3>
+    <p id="totalCount">0</p>
+  </div>
+  <div class="card">
+    <h3>حضر</h3>
+    <p id="inCount">0</p>
+  </div>
+  <div class="card">
+    <h3>غاب</h3>
+    <p id="outCount">0</p>
+  </div>
 </div>
 
 <div class="charts">
@@ -207,24 +192,48 @@ function shortName(fullName){
   const p = fullName.trim().split(" ");
   return p.length >= 2 ? p[0] + " " + p[1] : fullName;
 }
-function formatTime(timeStr){
-  if(!timeStr) return "";
-  const [h,m] = timeStr.split(":");
-  let hour = parseInt(h,10);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12 || 12;
-  return `${hour}:${m} ${ampm}`;
-}
 
-/* ================= CONFIG (كما هو) ================= */
+/* ================= CONFIG ================= */
 const API_URL ="https://script.google.com/macros/s/AKfycbzRKmx-wDXrMwqUaPVTE7g0n_4Wdvi3gNdLbAJtj5KfrHRuHPh5Y86eNigBWrDXkBomWg/exec";
 
-/* ENGINEER_DEPT كما هو بدون تغيير */
-const ENGINEER_DEPT = { /* نفس البيانات */ };
+const ENGINEER_DEPT = {
+  "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
+  "Efat Youssef Assad Hanna":"شمال المنيا",
+  "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
+  "Ahmed Abdelnasser Mohamed Aly":"توريدات",
+  "Amr Abdullah Abdrabbo Hlhil":"آلى",
+  "Wael Ibrahim Eid Mohamed":"بنى سويف",
+  "Aly Aboseif Abdelbadea Aly Abosaif":"جنوب المنيا",
+  "Mahmoud Fathy Youssef Ismail":"بنى سويف",
+  "Hussien Kamel Abdelkarem Abdelelamam":"جنوب المنيا",
+  "Reda Mekhemar Abdelhamid Abdelhakim":"جنوب المنيا",
+  "Mohamed Khaled Mohamed Khaled":"توريدات",
+  "Alaaeldien Mohamed Soliman AbdelhAlym":"آلى",
+  "Afraim Shawky Mikhail Habashy":"شمال المنيا",
+  "Mohamed Hussien Mohamed Ahmed":"جنوب المنيا",
+  "Ahmed Abdelfattah Aly Aly":"بنى سويف",
+  "Mohamed Moustafa Abdelrahman Reyad":"جنوب المنيا",
+  "Abdullah Shaaban Saad Mourad":"بنى سويف",
+  "Elfarouk Mohamed Ahmed Mohamed":"متابعه",
+  "Essam Sayed Mohamed Seddik":"جنوب المنيا",
+  "Eltawab Mahmoud Aly Aboelhassan":"آلى",
+  "Ibrahim Abdelnaser Abdelshafy Abdellatif":"آلى",
+  "Mohamed Saeed Aboelhagag Hassan":"آلى",
+  "Ahmed Mohamed Farouk Abdelrheam":"بنى سويف",
+  "Ahmed Rabie Abdelrazik Hussien":"شمال المنيا",
+  "Mohamed Atef Mahmoud Elgeneidy":"بنى سويف",
+  "Ali Ahmed Hassan Hamed":"آلى",
+  "Assem Hassan Abdelshafy Hassan":"بنى سويف",
+  "Omar Metwally Ahmed Mohamed Salem":"آلى",
+  "Abdelmoneam Hassan Hafez Karrat":"آلى",
+  "Mahmoud Ramadan Mahmoud Abdelaziz":"آلى",
+  "Mahmoud Khaled":"جنوب المنيا",
+  "Mohamed Youssef":"شمال المنيا"
+};
 
 const ENGINEERS = Object.keys(ENGINEER_DEPT);
 const TOTAL = ENGINEERS.length;
-totalCount.textContent = TOTAL;
+document.getElementById("totalCount").textContent = TOTAL;
 const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
 
 let barChart=null, pieChart=null, lastSignature="";
@@ -241,15 +250,19 @@ function loadDashboard(){
   fetch(`${API_URL}?action=attendance&role=admin&region=ALL&date=${d}`)
   .then(r=>r.json()).then(rows=>{
     if(!Array.isArray(rows))return;
+
     const presentSet=new Set();
     const deptData={};
     DEPARTMENTS.forEach(x=>deptData[x]=[]);
+
     rows.filter(r=>r.date===d && r.status==="IN").forEach(r=>{
       presentSet.add(r.name);
       deptData[ENGINEER_DEPT[r.name]].push(r);
     });
+
     inCount.textContent=presentSet.size;
     outCount.textContent=TOTAL-presentSet.size;
+
     renderDepartments(deptData,presentSet);
     drawCharts(deptData,presentSet.size);
   });
@@ -271,10 +284,12 @@ function checkForLiveUpdate(){
 function renderDepartments(deptData,presentSet){
   const box=document.getElementById("departmentsBox");
   box.innerHTML="";
+
   DEPARTMENTS.forEach(dept=>{
     const all=ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
     const present=deptData[dept].map(x=>x.name);
     const absent=all.filter(e=>!presentSet.has(e));
+
     box.innerHTML+=`
     <div class="dept-card">
       <h4>${dept}</h4>
@@ -283,14 +298,14 @@ function renderDepartments(deptData,presentSet){
           <b>حضر (${present.length})</b>
           ${deptData[dept].map(p=>`
             <div class="att-row">
-              <span class="att-name">${shortName(p.name)}</span>
-              <span class="att-loc">📍 ${p.location}</span>
-              <span class="att-time">${formatTime(p.time)}</span>
-            </div>`).join("")||"-"}
+              <span class="att-name" title="${p.name}">${shortName(p.name)}</span>
+              <span class="att-loc" title="${p.location}">📍 ${p.location}</span>
+              <span class="att-time">⏰ ${p.time}</span>
+            </div>`).join("") || "-"}
         </div>
         <div class="box">
           <b>غاب (${absent.length})</b>
-          ${absent.map(a=>`<span class="absent-name">${shortName(a)}</span>`).join("")||"-"}
+          ${absent.map(a=>`<span class="absent-name">${shortName(a)}</span>`).join("") || "-"}
         </div>
       </div>
     </div>`;
@@ -308,7 +323,7 @@ function drawCharts(deptData,inCount){
       labels:DEPARTMENTS,
       datasets:[{
         data:DEPARTMENTS.map(d=>deptData[d].length),
-        backgroundColor:"#38bdf8"
+        backgroundColor:"#60a5fa"
       }]
     },
     options:{plugins:{legend:{display:false}}}
@@ -320,7 +335,7 @@ function drawCharts(deptData,inCount){
       labels:["حضر","غاب"],
       datasets:[{
         data:[inCount,TOTAL-inCount],
-        backgroundColor:["#38bdf8","#818cf8"]
+        backgroundColor:["#60a5fa","#a5b4fc"]
       }]
     }
   });
