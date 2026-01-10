@@ -7,144 +7,164 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+/* ================= THEME ================= */
+:root{
+  --bg-main:#020617;
+  --bg-soft:#0b1224;
+  --card:#0f172a;
+  --border:#1e293b;
+
+  --text:#e5e7eb;
+  --text-soft:#94a3b8;
+
+  --accent:#38bdf8;
+  --accent-2:#818cf8;
+}
+
+/* ================= BASE ================= */
 body{
   margin:0;
   font-family:"Segoe UI",Tahoma,sans-serif;
-  background:#020617;
-  color:#e5e7eb;
+  background:radial-gradient(circle at top,var(--bg-soft),var(--bg-main) 60%);
+  color:var(--text);
 }
 header{
-  background:#0f172a;
-  padding:12px;
+  background:linear-gradient(90deg,#020617,#0f172a,#020617);
+  padding:14px;
   text-align:center;
   font-size:18px;
-  font-weight:bold;
+  font-weight:700;
+  border-bottom:1px solid var(--border);
 }
-.container{padding:16px}
+.container{padding:18px}
 
-/* Date */
-.date-box{text-align:center;margin-bottom:12px}
+/* ================= DATE ================= */
+.date-box{text-align:center;margin-bottom:18px}
 .date-box input{
-  background:#020617;
+  background:var(--card);
   color:#fff;
-  border:1px solid #334155;
-  padding:7px 14px;
-  border-radius:8px;
-  font-size:13px;
+  border:1px solid var(--border);
+  padding:9px 16px;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:600;
+  outline:none;
+}
+.date-box input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px rgba(56,189,248,.18);
 }
 
-/* KPI Cards */
+/* ================= KPI ================= */
 .cards{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-bottom:15px;
+  gap:16px;
+  margin-bottom:22px;
 }
 .card{
-  background:#0f172a;
-  padding:12px;
-  border-radius:10px;
+  background:linear-gradient(160deg,var(--card),var(--bg-main));
+  padding:16px;
+  border-radius:18px;
   text-align:center;
+  border:1px solid var(--border);
+  box-shadow:0 10px 28px rgba(0,0,0,.25);
 }
 .card h3{
   margin:0;
-  font-size:14px;
-  color:#c7d2fe;
+  font-size:13px;
+  font-weight:600;
+  color:var(--text-soft);
 }
 .card p{
-  margin:6px 0 0;
-  font-size:22px;
-  font-weight:bold;
+  margin-top:8px;
+  font-size:28px;
+  font-weight:800;
+  color:var(--accent);
 }
 
-/* Charts */
+/* ================= CHARTS ================= */
 .charts{
   display:grid;
   grid-template-columns:2fr 1fr;
-  gap:15px;
-  margin-bottom:20px;
+  gap:18px;
+  margin-bottom:26px;
 }
 .chart-box{
-  background:#0f172a;
-  padding:12px;
-  border-radius:12px;
+  background:linear-gradient(160deg,var(--card),var(--bg-main));
+  padding:16px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  box-shadow:0 10px 28px rgba(0,0,0,.25);
 }
 
-/* Departments */
+/* ================= DEPARTMENTS ================= */
 .departments{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(520px,1fr));
-  gap:16px;
+  grid-template-columns:repeat(auto-fit,minmax(540px,1fr));
+  gap:20px;
 }
 .dept-card{
-  background:linear-gradient(145deg,#0f172a,#020617);
-  padding:14px;
-  border-radius:14px;
-  border:1px solid #1e293b;
+  background:linear-gradient(160deg,var(--card),var(--bg-main));
+  padding:18px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  box-shadow:0 10px 28px rgba(0,0,0,.25);
 }
 .dept-card h4{
-  margin:0 0 10px;
-  font-size:15px;
+  margin:0 0 14px;
+  font-size:16px;
+  font-weight:700;
   color:#e0e7ff;
 }
 
-/* Split */
+/* ================= SPLIT ================= */
 .split{
   display:grid;
-  grid-template-columns:2fr 0.8fr;
-  gap:12px;
+  grid-template-columns:2fr .9fr;
+  gap:14px;
 }
 
+/* ================= BOX ================= */
 .box{
-  background:#020617;
-  border-radius:10px;
-  padding:10px;
+  background:var(--bg-main);
+  border-radius:14px;
+  padding:12px;
   font-size:13px;
-  max-height:260px;
+  max-height:300px;
   overflow:auto;
+  border:1px solid var(--border);
 }
 .box b{
   display:block;
-  margin-bottom:6px;
-  color:#93c5fd;
+  margin-bottom:8px;
+  color:var(--accent);
+  font-weight:700;
 }
 
-/* =================== Attendance Row =================== */
+/* ================= ATT ROW ================= */
 .att-row{
   display:grid;
   grid-template-columns:180px 1fr auto;
   align-items:center;
   gap:12px;
   padding:8px 0;
-  border-bottom:1px dashed #1e293b;
-
-  /* 🔥 Animation */
-  animation:rowIn .35s ease forwards;
+  border-bottom:1px dashed var(--border);
 }
 .att-row:last-child{border-bottom:none}
 
-.att-row:hover{
-  background:rgba(255,255,255,0.03);
-  border-radius:6px;
-}
-
-/* Name */
 .att-name{
-  font-weight:600;
+  font-weight:700;
   white-space:nowrap;
 }
-
-/* Location */
 .att-loc{
-  color:#93c5fd;
-  font-size:12px;
+  color:#7dd3fc;
+  font-size:13px;
   white-space:nowrap;
 }
-
-/* Time Chip */
 .att-time{
   font-size:12px;
-  font-weight:600;
+  font-weight:700;
   color:#fff;
   background:linear-gradient(135deg,#2563eb,#38bdf8);
   padding:4px 10px;
@@ -152,23 +172,12 @@ header{
   white-space:nowrap;
 }
 
-/* 🔹 Keyframes */
-@keyframes rowIn{
-  from{
-    opacity:0;
-    transform:translateY(6px);
-  }
-  to{
-    opacity:1;
-    transform:translateY(0);
-  }
-}
-/* ===================================================== */
-
-/* Absent */
+/* ================= ABSENT ================= */
 .absent-name{
   display:block;
-  padding:2px 0;
+  padding:3px 0;
+  color:#cbd5f5;
+  font-weight:500;
 }
 </style>
 </head>
@@ -184,18 +193,9 @@ header{
 </div>
 
 <div class="cards">
-  <div class="card">
-    <h3>إجمالي المهندسين</h3>
-    <p id="totalCount">0</p>
-  </div>
-  <div class="card">
-    <h3>حضر</h3>
-    <p id="inCount">0</p>
-  </div>
-  <div class="card">
-    <h3>غاب</h3>
-    <p id="outCount">0</p>
-  </div>
+  <div class="card"><h3>إجمالي المهندسين</h3><p id="totalCount">0</p></div>
+  <div class="card"><h3>حضر</h3><p id="inCount">0</p></div>
+  <div class="card"><h3>غاب</h3><p id="outCount">0</p></div>
 </div>
 
 <div class="charts">
@@ -214,17 +214,10 @@ function shortName(fullName){
   const p = fullName.trim().split(" ");
   return p.length >= 2 ? p[0] + " " + p[1] : fullName;
 }
-
-// Google Sheet Time Mirror
 function formatSheetTime(t){
   if(!t) return "";
   const d = new Date(t);
-  return d.toLocaleTimeString("en-US",{
-    hour:"numeric",
-    minute:"2-digit",
-    second:"2-digit",
-    hour12:true
-  });
+  return d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",second:"2-digit",hour12:true});
 }
 
 /* ================= CONFIG ================= */
@@ -267,7 +260,7 @@ const ENGINEER_DEPT = {
 
 const ENGINEERS = Object.keys(ENGINEER_DEPT);
 const TOTAL = ENGINEERS.length;
-document.getElementById("totalCount").textContent = TOTAL;
+totalCount.textContent = TOTAL;
 const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
 
 let barChart=null, pieChart=null, lastSignature="";
@@ -358,7 +351,7 @@ function drawCharts(deptData,inCount){
       labels:DEPARTMENTS,
       datasets:[{
         data:DEPARTMENTS.map(d=>deptData[d].length),
-        backgroundColor:"#60a5fa"
+        backgroundColor:"#38bdf8"
       }]
     },
     options:{plugins:{legend:{display:false}}}
@@ -370,7 +363,7 @@ function drawCharts(deptData,inCount){
       labels:["حضر","غاب"],
       datasets:[{
         data:[inCount,TOTAL-inCount],
-        backgroundColor:["#60a5fa","#a5b4fc"]
+        backgroundColor:["#38bdf8","#818cf8"]
       }]
     }
   });
