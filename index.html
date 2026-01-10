@@ -282,7 +282,7 @@ const VISIBLE_ENGINEERS =
     ? ENGINEERS
     : ENGINEERS.filter(e => ENGINEER_DEPT[e] === USER_REGION);
 
-const TOTAL = VISIBLE_ENGINEERS.length; // ❌ لم يتم مسحه
+const TOTAL = VISIBLE_ENGINEERS.length;   // ❌ لم يتم مسحه
 totalCount.textContent = TOTAL;
 
 const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
@@ -312,7 +312,7 @@ function loadDashboard(){
       deptData[ENGINEER_DEPT[r.name]].push(r);
     });
 
-    // ✅ FIX: الحساب الصحيح حسب الدور (بدون مسح TOTAL)
+    // ✅ FIX: الحساب الصحيح حسب الدور
     const ROLE_TOTAL =
       USER_REGION === "ALL"
         ? ENGINEERS.length
