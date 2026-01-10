@@ -6,6 +6,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- ================= AUTH GUARD ================= -->
+<script>
+/*
+  الحارس الأمني للـ Dashboard
+  - لو مفيش Session → يرجع Login
+  - لو فيه → يكمّل طبيعي
+*/
+const AUTH_RAW = sessionStorage.getItem("authUser");
+
+if(!AUTH_RAW){
+  alert("يجب تسجيل الدخول أولاً");
+  location.href = "https://mokh008.github.io/Attendance-Login/";
+}
+
+const AUTH_USER = JSON.parse(AUTH_RAW);
+const USER_ROLE   = AUTH_USER.role;
+const USER_REGION = AUTH_USER.region;
+</script>
+<!-- ============================================== -->
+
 <style>
 /* ================= THEME ================= */
 :root{
@@ -207,16 +227,16 @@ header{
 
 </div>
 
-<!-- ================= TEMP ACCESS (NO LOGIN) ================= -->
+<!-- ================= TEMP ACCESS (DISABLED) ================= -->
 <script>
 /*
-  دخول مؤقت بدون Login
-  بعد ما نعمل Login Portal جديد:
-  - الجزء ده يتشال
-  - ويتربط بـ Token / Session
+  ❌ تم تعطيل الدخول المؤقت
+  السبب:
+  - Dashboard بقى مربوط بالـ Login
+  - الدور والمنطقة جايين من Session
 */
-const USER_ROLE   = "sector_manager"; // يشوف كل الإدارات
-const USER_REGION = "ALL";            // كل المناطق
+// const USER_ROLE   = "sector_manager";
+// const USER_REGION = "ALL";
 </script>
 <!-- ========================================================== -->
 
