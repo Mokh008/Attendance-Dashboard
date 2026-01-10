@@ -6,6 +6,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- ================= LOGIN GUARD (ADD ONLY) ================= -->
+<script>
+const AUTH_USER_RAW = sessionStorage.getItem("authUser");
+if(!AUTH_USER_RAW){
+  alert("يجب تسجيل الدخول أولاً");
+  location.href = "index.html";
+}
+const AUTH_USER = JSON.parse(AUTH_USER_RAW);
+const USER_ROLE   = AUTH_USER.role;    // sector_manager | Manger
+const USER_REGION = AUTH_USER.region;  // ALL | اسم الإدارة
+</script>
+<!-- ========================================================== -->
+
 <style>
 /* ================= THEME ================= */
 :root{
@@ -221,7 +234,7 @@ function formatSheetTime(t){
 }
 
 /* ================= CONFIG ================= */
-const API_URL ="https://script.google.com/macros/s/AKfycbzRKmx-wDXrMwqUaPVTE7g0n_4Wdvi3gNdLbAJtj5KfrHRuHPh5Y86eNigBWrDXkBomWg/exec";
+const API_URL ="https://script.google.com/macros/s/AKfycbwbo_nIWb5fpds1jXPFiuecKSY1j_RggLL04NwaKpRLypvE8nG2bJ-DT9Ff2Rw9wZ_olw/exec";
 
 const ENGINEER_DEPT = {
   "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
@@ -274,7 +287,7 @@ dateInput.addEventListener("change",loadDashboard);
 /* ================= LOAD ================= */
 function loadDashboard(){
   const d=dateInput.value;
-  fetch(`${API_URL}?action=attendance&role=admin&region=ALL&date=${d}`)
+  fetch(`${API_URL}?action=attendance&role=${USER_ROLE}&region=${USER_REGION}&date=${d}`)
   .then(r=>r.json()).then(rows=>{
     if(!Array.isArray(rows))return;
 
@@ -298,7 +311,7 @@ function loadDashboard(){
 /* ================= LIVE ================= */
 function checkForLiveUpdate(){
   if(dateInput.value!==today)return;
-  fetch(`${API_URL}?action=dashboard&role=admin&region=ALL&date=${today}`)
+  fetch(`${API_URL}?action=dashboard&role=${USER_ROLE}&region=${USER_REGION}&date=${today}`)
   .then(r=>r.json()).then(d=>{
     if(d.lastInSignature && d.lastInSignature!==lastSignature){
       lastSignature=d.lastInSignature;
@@ -313,6 +326,8 @@ function renderDepartments(deptData,presentSet){
   box.innerHTML="";
 
   DEPARTMENTS.forEach(dept=>{
+    if(USER_ROLE!=="sector_manager" && USER_REGION!==dept) return;
+
     const all=ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
     const present=deptData[dept].map(x=>x.name);
     const absent=all.filter(e=>!presentSet.has(e));
