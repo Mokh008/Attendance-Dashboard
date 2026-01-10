@@ -5,20 +5,6 @@
 <title>Attendance Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- ================= LOGIN GUARD (ADD ONLY) ================= -->
-<script>
-const AUTH_USER_RAW = sessionStorage.getItem("authUser");
-if(!AUTH_USER_RAW){
-  alert("يجب تسجيل الدخول أولاً");
-  location.href = "index.html";
-}
-const AUTH_USER = JSON.parse(AUTH_USER_RAW);
-const USER_ROLE   = AUTH_USER.role;    // sector_manager | Manger
-const USER_REGION = AUTH_USER.region;  // ALL | اسم الإدارة
-</script>
-<!-- ========================================================== -->
-
 <style>
 /* ================= THEME ================= */
 :root{
