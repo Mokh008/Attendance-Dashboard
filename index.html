@@ -8,11 +8,6 @@
 
 <!-- ================= AUTH GUARD ================= -->
 <script>
-/*
-  الحارس الأمني للـ Dashboard
-  - لو مفيش Session → يرجع Login
-  - لو فيه → يكمّل طبيعي
-*/
 const AUTH_RAW = sessionStorage.getItem("authUser");
 
 if(!AUTH_RAW){
@@ -243,7 +238,7 @@ function formatSheetTime(t){
 /* ================= CONFIG ================= */
 const API_URL ="https://script.google.com/macros/s/AKfycbwLFKF--C1HL_3JnAQAsZZir0Cd2s6lSJAAu4R7zIA_D_KRM6d8QsVpK_h49qiM8PMBaQ/exec";
 
-const ENGINEER_DEPT = { /* نفس الداتا بتاعتك بدون أي تعديل */ 
+const ENGINEER_DEPT = {
   "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
   "Efat Youssef Assad Hanna":"شمال المنيا",
   "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
@@ -280,19 +275,17 @@ const ENGINEER_DEPT = { /* نفس الداتا بتاعتك بدون أي تعد
 
 const ENGINEERS = Object.keys(ENGINEER_DEPT);
 
-/* ===== ADD ONLY (ROLE FILTER) ===== */
 const VISIBLE_ENGINEERS =
-  USER_ROLE === "sector_manager"
+  USER_REGION === "ALL"
     ? ENGINEERS
     : ENGINEERS.filter(e => ENGINEER_DEPT[e] === USER_REGION);
-/* ================================ */
 
 const TOTAL = VISIBLE_ENGINEERS.length;
 totalCount.textContent = TOTAL;
 
 const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
 
-let barChart=null, pieChart=null, lastSignature="";
+let barChart=null, pieChart=null;
 
 /* ================= DATE ================= */
 const dateInput=document.getElementById("datePicker");
@@ -313,7 +306,7 @@ function loadDashboard(){
 
     rows.filter(r=>r.date===d && r.status==="IN").forEach(r=>{
       if(!ENGINEER_DEPT[r.name]) return;
-      if(USER_ROLE!=="sector_manager" && ENGINEER_DEPT[r.name]!==USER_REGION) return;
+      if(USER_REGION!=="ALL" && ENGINEER_DEPT[r.name]!==USER_REGION) return; // FIX
 
       presentSet.add(r.name);
       deptData[ENGINEER_DEPT[r.name]].push(r);
@@ -333,7 +326,7 @@ function renderDepartments(deptData,presentSet){
   box.innerHTML="";
 
   DEPARTMENTS.forEach(dept=>{
-    if(USER_ROLE!=="sector_manager" && USER_REGION!==dept) return;
+    if(USER_REGION!=="ALL" && USER_REGION!==dept) return;
 
     const all=VISIBLE_ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
     const present=deptData[dept].map(x=>x.name);
@@ -368,7 +361,7 @@ function drawCharts(deptData,inCount){
   if(pieChart)pieChart.destroy();
 
   const CHART_DEPTS =
-    USER_ROLE === "sector_manager" ? DEPARTMENTS : [USER_REGION];
+    USER_REGION === "ALL" ? DEPARTMENTS : [USER_REGION];
 
   barChart=new Chart(deptChart,{
     type:"bar",
