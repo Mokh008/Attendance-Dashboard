@@ -304,13 +304,14 @@ function loadDashboard(){
     const deptData={};
     DEPARTMENTS.forEach(x=>deptData[x]=[]);
 
-    rows.filter(r=>r.date===d && r.status==="IN").forEach(r=>{
-      if(!ENGINEER_DEPT[r.name]) return;
-      if(USER_REGION!=="ALL" && ENGINEER_DEPT[r.name]!==USER_REGION) return; // FIX
+    rows
+      .filter(r => r.status === "IN")
+      .forEach(r=>{
+        if(!ENGINEER_DEPT[r.name]) return;
 
-      presentSet.add(r.name);
-      deptData[ENGINEER_DEPT[r.name]].push(r);
-    });
+        presentSet.add(r.name);
+        deptData[ENGINEER_DEPT[r.name]].push(r);
+      });
 
     inCount.textContent=presentSet.size;
     outCount.textContent=TOTAL-presentSet.size;
@@ -341,7 +342,7 @@ function renderDepartments(deptData,presentSet){
           ${deptData[dept].map(p=>`
             <div class="att-row">
               <span class="att-name">${shortName(p.name)}</span>
-              <span class="att-loc">📍 ${p.location}</span>
+              <span class="att-loc">📍 ${p.region}</span>
               <span class="att-time">⏰ ${formatSheetTime(p.time)}</span>
             </div>
           `).join("") || "-"}
