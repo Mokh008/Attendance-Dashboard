@@ -16,6 +16,8 @@ body{
   height:100vh;
   color:#e5e7eb;
 }
+
+/* ================= CARD ================= */
 .card{
   background:#0f172a;
   padding:32px;
@@ -24,8 +26,17 @@ body{
   box-shadow:0 25px 50px rgba(0,0,0,.6);
   text-align:center;
 }
-.card h2{margin-bottom:6px;font-size:22px}
-.card p{margin-bottom:22px;font-size:13px;color:#94a3b8}
+.card h2{
+  margin-bottom:6px;
+  font-size:22px;
+}
+.card p{
+  margin-bottom:22px;
+  font-size:13px;
+  color:#94a3b8;
+}
+
+/* ================= INPUTS ================= */
 input{
   width:100%;
   padding:13px;
@@ -37,6 +48,8 @@ input{
   font-size:14px;
   text-align:center;
 }
+
+/* ================= BUTTON ================= */
 button{
   width:100%;
   padding:13px;
@@ -48,8 +61,19 @@ button{
   font-weight:700;
   cursor:pointer;
 }
-button:disabled{opacity:.6}
-#error{margin-top:14px;font-size:13px;color:#ef4444}
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+/* ================= ERROR ================= */
+#error{
+  margin-top:14px;
+  font-size:13px;
+  color:#ef4444;
+}
+
+/* ================= LOADER OVERLAY ================= */
 .loader-overlay{
   position:fixed;
   inset:0;
@@ -57,23 +81,31 @@ button:disabled{opacity:.6}
   display:none;
   justify-content:center;
   align-items:center;
+  z-index:10;
 }
+
+/* ================= SPINNER ================= */
 .spinner{
-  width:54px;height:54px;
+  width:54px;
+  height:54px;
   border:5px solid rgba(255,255,255,.15);
   border-top:5px solid #38bdf8;
   border-radius:50%;
   animation:spin 1s linear infinite;
 }
-@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
 </style>
 </head>
 
 <body>
 
+<!-- ================= LOADER ================= -->
 <div class="loader-overlay" id="loader">
   <div class="spinner"></div>
 </div>
+<!-- ======================================== -->
 
 <div class="card">
   <h2>Attendance System</h2>
@@ -87,9 +119,9 @@ button:disabled{opacity:.6}
 </div>
 
 <script>
-/* ✅ نفس Web App URL */
+/* ✅ Web App URL (نفس اللي Dashboard بيستخدمه) */
 const API_URL =
-"https://script.google.com/macros/s/AKfycbxwA2CYQ6RsC0JbWcbJGY9plwVB6ZGOimE16Smz-ZGEaeZATpA5yAyRUVRuoKspmRPYhQ/exec";
+"https://script.google.com/macros/s/AKfycbwLFKF--C1HL_3JnAQAsZZir0Cd2s6lSJAAu4R7zIA_D_KRM6d8QsVpK_h49qiM8PMBaQ/exec";
 
 function showLoader(state){
   loader.style.display = state ? "flex" : "none";
@@ -108,27 +140,31 @@ function login(){
 
   showLoader(true);
 
-  fetch(`${API_URL}?action=login&id=${encodeURIComponent(id)}&pin=${encodeURIComponent(pin)}`)
-    .then(r => r.json())
-    .then(data => {
+  fetch(
+    `${API_URL}?action=login&id=${encodeURIComponent(id)}&pin=${encodeURIComponent(pin)}`
+  )
+  .then(r => r.json())
+  .then(data => {
 
-      if(!data.success){
-        error.textContent = data.message || "ممنوع الدخول";
-        showLoader(false);
-        return;
-      }
-
-      sessionStorage.setItem(
-        "authUser",
-        JSON.stringify(data.user)
-      );
-
-      location.href = "dashboard.html";
-    })
-    .catch(() => {
-      error.textContent = "خطأ في الاتصال بالسيرفر";
+    if(!data.success){
+      error.textContent = data.message || "ممنوع الدخول";
       showLoader(false);
-    });
+      return;
+    }
+
+    // ✅ تخزين بيانات المستخدم
+    sessionStorage.setItem(
+      "authUser",
+      JSON.stringify(data.user)
+    );
+
+    // ✅ التحويل للداشبورد
+    location.href = "dashboard.html";
+  })
+  .catch(() => {
+    error.textContent = "خطأ في الاتصال بالسيرفر";
+    showLoader(false);
+  });
 }
 </script>
 
