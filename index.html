@@ -341,7 +341,7 @@ function renderDepartments(deptData,presentSet){
           ${deptData[dept].map(p=>`
             <div class="att-row">
               <span class="att-name">${shortName(p.name)}</span>
-              <span class="att-loc">📍 ${p.region}</span>
+              <span class="att-loc">📍 ${p.location}</span>
               <span class="att-time">⏰ ${formatSheetTime(p.time)}</span>
             </div>
           `).join("") || "-"}
