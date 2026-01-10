@@ -63,7 +63,7 @@ button{
   font-weight:700;
   cursor:pointer;
   display:block;
-  margin:0 auto; /* ✅ توسيط حقيقي */
+  margin:0 auto;
 }
 button:disabled{
   opacity:.6;
@@ -124,7 +124,7 @@ button:disabled{
 </div>
 
 <script>
-/* ✅ URL الجديد */
+/* ✅ Web App URL */
 const API_URL = "https://script.google.com/macros/s/AKfycbyb77GKrc-8AyBV0lpoYTGtOZ_bjSwdkdihqYoFeTe6-dTFbC7TIjx24oRWNdp_2xWOJg/exec";
 
 function showLoader(state){
@@ -144,30 +144,39 @@ function login(){
 
   showLoader(true);
 
-  /* ✅ Delay بسيط عشان الـ Loader يبان */
   setTimeout(() => {
 
-    fetch(`${API_URL}?action=login&id=${id}&pin=${pin}`)
-      .then(r => r.json())
-      .then(data => {
-
-        if(!data.success){
-          error.textContent = "ممنوع الدخول";
-          showLoader(false);
-          return;
-        }
-
-        sessionStorage.setItem(
-          "authUser",
-          JSON.stringify(data.user)
-        );
-
-        location.href = "dashboard.html";
+    fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "login",
+        id: id,
+        pin: pin
       })
-      .catch(()=>{
-        error.textContent = "خطأ في الاتصال بالسيرفر";
+    })
+    .then(r => r.json())
+    .then(data => {
+
+      if (!data.success) {
+        error.textContent = data.message || "ممنوع الدخول";
         showLoader(false);
-      });
+        return;
+      }
+
+      sessionStorage.setItem(
+        "authUser",
+        JSON.stringify(data.user)
+      );
+
+      location.href = "dashboard.html";
+    })
+    .catch(() => {
+      error.textContent = "خطأ في الاتصال بالسيرفر";
+      showLoader(false);
+    });
 
   }, 150);
 }
