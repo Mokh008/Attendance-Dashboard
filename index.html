@@ -16,6 +16,8 @@ body{
   height:100vh;
   color:#e5e7eb;
 }
+
+/* ================= CARD ================= */
 .card{
   background:#0f172a;
   padding:32px;
@@ -23,6 +25,8 @@ body{
   width:340px;
   box-shadow:0 25px 50px rgba(0,0,0,.6);
   text-align:center;
+  position:relative;
+  z-index:2;
 }
 .card h2{
   margin-bottom:6px;
@@ -33,6 +37,8 @@ body{
   font-size:13px;
   color:#94a3b8;
 }
+
+/* ================= INPUTS ================= */
 input{
   width:100%;
   padding:13px;
@@ -44,6 +50,8 @@ input{
   font-size:14px;
   text-align:center;
 }
+
+/* ================= BUTTON ================= */
 button{
   width:100%;
   padding:13px;
@@ -55,15 +63,52 @@ button{
   font-weight:700;
   cursor:pointer;
 }
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+/* ================= ERROR ================= */
 #error{
   margin-top:14px;
   font-size:13px;
   color:#ef4444;
 }
+
+/* ================= LOADER OVERLAY ================= */
+.loader-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,23,.85);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
+}
+
+/* ================= SPINNER ================= */
+.spinner{
+  width:54px;
+  height:54px;
+  border:5px solid rgba(255,255,255,.15);
+  border-top:5px solid #38bdf8;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
 </style>
 </head>
 
 <body>
+
+<!-- ================= LOADER ================= -->
+<div class="loader-overlay" id="loader">
+  <div class="spinner"></div>
+</div>
+<!-- ======================================== -->
 
 <div class="card">
   <h2>Attendance System</h2>
@@ -72,13 +117,18 @@ button{
   <input id="empId" type="text" placeholder="User ID">
   <input id="pin" type="password" placeholder="PIN">
 
-  <button onclick="login()">دخول</button>
+  <button id="loginBtn" onclick="login()">دخول</button>
   <div id="error"></div>
 </div>
 
 <script>
 /* ✅ URL الجديد */
 const API_URL = "https://script.google.com/macros/s/AKfycbwbo_nIWb5fpds1jXPFiuecKSY1j_RggLL04NwaKpRLypvE8nG2bJ-DT9Ff2Rw9wZ_olw/exec";
+
+function showLoader(state){
+  loader.style.display = state ? "flex" : "none";
+  loginBtn.disabled = state;
+}
 
 function login(){
   const id  = empId.value.trim();
@@ -90,27 +140,28 @@ function login(){
     return;
   }
 
+  showLoader(true);
+
   fetch(`${API_URL}?action=login&id=${id}&pin=${pin}`)
     .then(r => r.json())
     .then(data => {
 
-      // ❌ ممنوع
       if(!data.success){
         error.textContent = "ممنوع الدخول";
+        showLoader(false);
         return;
       }
 
-      // ✅ تخزين المستخدم
       sessionStorage.setItem(
         "authUser",
         JSON.stringify(data.user)
       );
 
-      // ➜ Dashboard
       location.href = "dashboard.html";
     })
     .catch(()=>{
       error.textContent = "خطأ في الاتصال بالسيرفر";
+      showLoader(false);
     });
 }
 </script>
