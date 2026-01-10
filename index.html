@@ -17,7 +17,7 @@ if(!AUTH_RAW){
 
 const AUTH_USER = JSON.parse(AUTH_RAW);
 
-/* ✅ NORMALIZE VALUES (الحل النهائي) */
+/* ✅ NORMALIZE VALUES */
 const USER_ROLE   = (AUTH_USER.role   || "").trim().toLowerCase();
 const USER_REGION = (AUTH_USER.region || "").trim().toUpperCase();
 </script>
@@ -240,7 +240,8 @@ function formatSheetTime(t){
 /* ================= CONFIG ================= */
 const API_URL ="https://script.google.com/macros/s/AKfycbz0EYhlFFL0qwCRI3NzFaUQmS_0flufSsWxDl6eZtemraJf4O8Y9JQMXPgKk6fAbKXx8w/exec";
 
-const ENGINEER_DEPT = { /* نفس البيانات بدون مسح */ 
+/* ===== ENGINEER_DEPT: نفس الكود الأصلي بالكامل ===== */
+const ENGINEER_DEPT = {
   "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
   "Efat Youssef Assad Hanna":"شمال المنيا",
   "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
@@ -282,9 +283,6 @@ const VISIBLE_ENGINEERS =
     ? ENGINEERS
     : ENGINEERS.filter(e => ENGINEER_DEPT[e] === USER_REGION);
 
-const TOTAL = VISIBLE_ENGINEERS.length;   // ❌ لم يتم مسحه
-totalCount.textContent = TOTAL;
-
 const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
 
 let barChart=null, pieChart=null;
@@ -303,16 +301,23 @@ function loadDashboard(){
     if(!Array.isArray(rows))return;
 
     const presentSet=new Set();
+
+    /* ✅ FIX: deptData = Set + rows */
     const deptData={};
-    DEPARTMENTS.forEach(x=>deptData[x]=[]);
+    DEPARTMENTS.forEach(x=>{
+      deptData[x]={ set:new Set(), rows:[] };
+    });
 
     rows.filter(r=>r.status==="IN").forEach(r=>{
       if(!ENGINEER_DEPT[r.name]) return;
+
       presentSet.add(r.name);
-      deptData[ENGINEER_DEPT[r.name]].push(r);
+
+      const dept = ENGINEER_DEPT[r.name];
+      deptData[dept].set.add(r.name);   // مهندس واحد
+      deptData[dept].rows.push(r);      // البصمة
     });
 
-    // ✅ FIX: الحساب الصحيح حسب الدور
     const ROLE_TOTAL =
       USER_REGION === "ALL"
         ? ENGINEERS.length
@@ -336,7 +341,7 @@ function renderDepartments(deptData,presentSet){
     if(USER_REGION!=="ALL" && USER_REGION!==dept) return;
 
     const all=VISIBLE_ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
-    const present=deptData[dept].map(x=>x.name);
+    const present=[...deptData[dept].set];
     const absent=all.filter(e=>!presentSet.has(e));
 
     box.innerHTML+=`
@@ -345,7 +350,7 @@ function renderDepartments(deptData,presentSet){
       <div class="split">
         <div class="box">
           <b>حضر (${present.length})</b>
-          ${deptData[dept].map(p=>`
+          ${deptData[dept].rows.map(p=>`
             <div class="att-row">
               <span class="att-name">${shortName(p.name)}</span>
               <span class="att-loc">📍 ${p.location}</span>
@@ -375,7 +380,7 @@ function drawCharts(deptData,inCount,roleTotal){
     data:{
       labels:CHART_DEPTS,
       datasets:[{
-        data:CHART_DEPTS.map(d=>deptData[d]?.length || 0),
+        data:CHART_DEPTS.map(d=>deptData[d]?.set.size || 0),
         backgroundColor:"#38bdf8"
       }]
     },
@@ -395,8 +400,6 @@ function drawCharts(deptData,inCount,roleTotal){
 }
 
 loadDashboard();
-
-/* ✅ ADD: Auto Refresh (رجوع التحديث التلقائي) */
 setInterval(loadDashboard,30000);
 </script>
 
