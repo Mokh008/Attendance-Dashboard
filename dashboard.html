@@ -28,24 +28,23 @@ header{
   background:#020617;
   color:#fff;
   border:1px solid #334155;
-  padding:6px 12px;
-  border-radius:8px;
-  font-size:14px;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:13px;
 }
 
 /* KPI Cards */
 .cards{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin-bottom:18px;
+  gap:10px;
+  margin-bottom:15px;
 }
 .card{
   background:#0f172a;
-  padding:14px;
-  border-radius:12px;
+  padding:12px;
+  border-radius:10px;
   text-align:center;
-  border:1px solid #1e293b;
 }
 .card h3{
   margin:0;
@@ -53,8 +52,8 @@ header{
   color:#c7d2fe;
 }
 .card p{
-  margin-top:6px;
-  font-size:24px;
+  margin:6px 0 0;
+  font-size:22px;
   font-weight:bold;
 }
 
@@ -62,24 +61,23 @@ header{
 .charts{
   display:grid;
   grid-template-columns:2fr 1fr;
-  gap:16px;
+  gap:15px;
   margin-bottom:20px;
 }
 .chart-box{
   background:#0f172a;
-  padding:14px;
-  border-radius:14px;
-  border:1px solid #1e293b;
+  padding:12px;
+  border-radius:12px;
 }
 
 /* Departments */
 .departments{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(540px,1fr));
-  gap:18px;
+  grid-template-columns:repeat(auto-fit,minmax(520px,1fr));
+  gap:16px;
 }
 .dept-card{
-  background:#020617;
+  background:linear-gradient(145deg,#0f172a,#020617);
   padding:14px;
   border-radius:14px;
   border:1px solid #1e293b;
@@ -90,20 +88,19 @@ header{
   color:#e0e7ff;
 }
 
-/* Split */
+/* Split (حضور أوسع – غياب أضيق) */
 .split{
   display:grid;
-  grid-template-columns:2.2fr 0.8fr;
+  grid-template-columns:2fr 0.8fr;
   gap:12px;
 }
 
-/* Box */
 .box{
   background:#020617;
   border-radius:10px;
   padding:10px;
   font-size:13px;
-  max-height:280px;
+  max-height:260px;
   overflow:auto;
 }
 .box b{
@@ -115,7 +112,7 @@ header{
 /* Attendance Row */
 .att-row{
   display:grid;
-  grid-template-columns:2.2fr 3fr 0.8fr;
+  grid-template-columns:2.2fr 2.5fr 0.7fr;
   align-items:center;
   gap:8px;
   padding:6px 0;
@@ -129,18 +126,19 @@ header{
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
 .att-loc{
   color:#93c5fd;
   font-size:12px;
-  white-space:nowrap;
+  white-space:nowrap;        /* سطر واحد */
   overflow:hidden;
-  text-overflow:ellipsis;
+  text-overflow:ellipsis;    /* … */
 }
+
 .att-time{
   text-align:right;
   font-size:12px;
   color:#c7d2fe;
-  white-space:nowrap;
 }
 
 /* Absent */
@@ -187,6 +185,8 @@ header{
 
 <script>
 /* ================= HELPERS ================= */
+
+// تقصير الاسم (عرض فقط)
 function shortName(fullName){
   if(!fullName) return "";
   const p = fullName.trim().split(" ");
@@ -301,7 +301,8 @@ function renderDepartments(deptData,presentSet){
               <span class="att-name" title="${p.name}">${shortName(p.name)}</span>
               <span class="att-loc" title="${p.location}">📍 ${p.location}</span>
               <span class="att-time">⏰ ${p.time}</span>
-            </div>`).join("") || "-"}
+            </div>
+          `).join("") || "-"}
         </div>
         <div class="box">
           <b>غاب (${absent.length})</b>
