@@ -227,19 +227,6 @@ header{
 
 </div>
 
-<!-- ================= TEMP ACCESS (DISABLED) ================= -->
-<script>
-/*
-  ❌ تم تعطيل الدخول المؤقت
-  السبب:
-  - Dashboard بقى مربوط بالـ Login
-  - الدور والمنطقة جايين من Session
-*/
-// const USER_ROLE   = "sector_manager";
-// const USER_REGION = "ALL";
-</script>
-<!-- ========================================================== -->
-
 <script>
 /* ================= HELPERS ================= */
 function shortName(fullName){
@@ -256,7 +243,7 @@ function formatSheetTime(t){
 /* ================= CONFIG ================= */
 const API_URL ="https://script.google.com/macros/s/AKfycbwLFKF--C1HL_3JnAQAsZZir0Cd2s6lSJAAu4R7zIA_D_KRM6d8QsVpK_h49qiM8PMBaQ/exec";
 
-const ENGINEER_DEPT = {
+const ENGINEER_DEPT = { /* نفس الداتا بتاعتك بدون أي تعديل */ 
   "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
   "Efat Youssef Assad Hanna":"شمال المنيا",
   "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
@@ -292,8 +279,17 @@ const ENGINEER_DEPT = {
 };
 
 const ENGINEERS = Object.keys(ENGINEER_DEPT);
-const TOTAL = ENGINEERS.length;
+
+/* ===== ADD ONLY (ROLE FILTER) ===== */
+const VISIBLE_ENGINEERS =
+  USER_ROLE === "sector_manager"
+    ? ENGINEERS
+    : ENGINEERS.filter(e => ENGINEER_DEPT[e] === USER_REGION);
+/* ================================ */
+
+const TOTAL = VISIBLE_ENGINEERS.length;
 totalCount.textContent = TOTAL;
+
 const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
 
 let barChart=null, pieChart=null, lastSignature="";
@@ -316,6 +312,9 @@ function loadDashboard(){
     DEPARTMENTS.forEach(x=>deptData[x]=[]);
 
     rows.filter(r=>r.date===d && r.status==="IN").forEach(r=>{
+      if(!ENGINEER_DEPT[r.name]) return;
+      if(USER_ROLE!=="sector_manager" && ENGINEER_DEPT[r.name]!==USER_REGION) return;
+
       presentSet.add(r.name);
       deptData[ENGINEER_DEPT[r.name]].push(r);
     });
@@ -328,18 +327,6 @@ function loadDashboard(){
   });
 }
 
-/* ================= LIVE ================= */
-function checkForLiveUpdate(){
-  if(dateInput.value!==today)return;
-  fetch(`${API_URL}?action=dashboard&role=${USER_ROLE}&region=${USER_REGION}&date=${today}`)
-  .then(r=>r.json()).then(d=>{
-    if(d.lastInSignature && d.lastInSignature!==lastSignature){
-      lastSignature=d.lastInSignature;
-      loadDashboard();
-    }
-  });
-}
-
 /* ================= UI ================= */
 function renderDepartments(deptData,presentSet){
   const box=document.getElementById("departmentsBox");
@@ -348,7 +335,7 @@ function renderDepartments(deptData,presentSet){
   DEPARTMENTS.forEach(dept=>{
     if(USER_ROLE!=="sector_manager" && USER_REGION!==dept) return;
 
-    const all=ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
+    const all=VISIBLE_ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
     const present=deptData[dept].map(x=>x.name);
     const absent=all.filter(e=>!presentSet.has(e));
 
@@ -380,12 +367,15 @@ function drawCharts(deptData,inCount){
   if(barChart)barChart.destroy();
   if(pieChart)pieChart.destroy();
 
+  const CHART_DEPTS =
+    USER_ROLE === "sector_manager" ? DEPARTMENTS : [USER_REGION];
+
   barChart=new Chart(deptChart,{
     type:"bar",
     data:{
-      labels:DEPARTMENTS,
+      labels:CHART_DEPTS,
       datasets:[{
-        data:DEPARTMENTS.map(d=>deptData[d].length),
+        data:CHART_DEPTS.map(d=>deptData[d]?.length || 0),
         backgroundColor:"#38bdf8"
       }]
     },
@@ -404,7 +394,6 @@ function drawCharts(deptData,inCount){
   });
 }
 
-setInterval(checkForLiveUpdate,10000);
 loadDashboard();
 </script>
 
