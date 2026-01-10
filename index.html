@@ -6,63 +6,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  margin: 0;
-  font-family: "Segoe UI", Tahoma, sans-serif;
-  background: linear-gradient(135deg, #0f172a, #020617);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  color: #e5e7eb;
+body{
+  margin:0;
+  font-family:"Segoe UI",Tahoma,sans-serif;
+  background:linear-gradient(135deg,#0f172a,#020617);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  color:#e5e7eb;
 }
-
-.card {
-  background: #0f172a;
-  padding: 30px;
-  border-radius: 16px;
-  width: 320px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-  text-align: center;
+.card{
+  background:#0f172a;
+  padding:32px;
+  border-radius:18px;
+  width:340px;
+  box-shadow:0 25px 50px rgba(0,0,0,.6);
+  text-align:center;
 }
-
-.card h2 {
-  margin-bottom: 20px;
-  font-size: 20px;
+.card h2{
+  margin-bottom:6px;
+  font-size:22px;
 }
-
-input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  border: none;
-  background: #020617;
-  color: #fff;
-  font-size: 14px;
-  text-align: center;
+.card p{
+  margin-bottom:22px;
+  font-size:13px;
+  color:#94a3b8;
 }
-
-button {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: white;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
+input{
+  width:100%;
+  padding:13px;
+  margin-bottom:16px;
+  border-radius:12px;
+  border:1px solid #1e293b;
+  background:#020617;
+  color:#fff;
+  font-size:14px;
+  text-align:center;
 }
-
-button:disabled {
-  opacity: 0.6;
+button{
+  width:100%;
+  padding:13px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#2563eb,#38bdf8);
+  color:#fff;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
 }
-
-#error {
-  margin-top: 15px;
-  font-size: 14px;
-  color: #ef4444;
+#error{
+  margin-top:14px;
+  font-size:13px;
+  color:#ef4444;
 }
 </style>
 </head>
@@ -70,47 +66,51 @@ button:disabled {
 <body>
 
 <div class="card">
-  <h2>تسجيل الدخول</h2>
+  <h2>Attendance System</h2>
+  <p>تسجيل دخول الإدارة</p>
 
-  <input id="empId" type="text" placeholder="رقم المستخدم">
+  <input id="empId" type="text" placeholder="User ID">
   <input id="pin" type="password" placeholder="PIN">
 
   <button onclick="login()">دخول</button>
-
   <div id="error"></div>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycby9We83tXmtxG_1ykdriEXyASO_685z1ieBrMb9HJpRdEYs8KXhzAkjFyaCchjgwoQAzg/exec";
+/* ✅ URL الجديد */
+const API_URL = "https://script.google.com/macros/s/AKfycbwbo_nIWb5fpds1jXPFiuecKSY1j_RggLL04NwaKpRLypvE8nG2bJ-DT9Ff2Rw9wZ_olw/exec";
 
-function login() {
-  const id  = document.getElementById("empId").value.trim();
-  const pin = document.getElementById("pin").value.trim();
-  const err = document.getElementById("error");
+function login(){
+  const id  = empId.value.trim();
+  const pin = pin.value.trim();
+  error.textContent = "";
 
-  err.textContent = "";
-
-  if (!id || !pin) {
-    err.textContent = "من فضلك أدخل البيانات كاملة";
+  if(!id || !pin){
+    error.textContent = "من فضلك أدخل البيانات كاملة";
     return;
   }
 
   fetch(`${API_URL}?action=login&id=${id}&pin=${pin}`)
-    .then(res => res.json())
+    .then(r => r.json())
     .then(data => {
-      if (data.error) {
-        err.textContent = "بيانات الدخول غير صحيحة";
+
+      // ❌ ممنوع
+      if(!data.success){
+        error.textContent = "ممنوع الدخول";
         return;
       }
 
-      // تخزين المستخدم
-      sessionStorage.setItem("user", JSON.stringify(data));
+      // ✅ تخزين المستخدم
+      sessionStorage.setItem(
+        "authUser",
+        JSON.stringify(data.user)
+      );
 
-      // تحويل للداشبورد
+      // ➜ Dashboard
       location.href = "dashboard.html";
     })
-    .catch(() => {
-      err.textContent = "حدث خطأ في الاتصال";
+    .catch(()=>{
+      error.textContent = "خطأ في الاتصال بالسيرفر";
     });
 }
 </script>
