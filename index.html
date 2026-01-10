@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Login – Attendance System</title>
+<title>Redirecting…</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -16,8 +16,6 @@ body{
   height:100vh;
   color:#e5e7eb;
 }
-
-/* ================= CARD ================= */
 .card{
   background:#0f172a;
   padding:32px;
@@ -26,65 +24,6 @@ body{
   box-shadow:0 25px 50px rgba(0,0,0,.6);
   text-align:center;
 }
-.card h2{
-  margin-bottom:6px;
-  font-size:22px;
-}
-.card p{
-  margin-bottom:22px;
-  font-size:13px;
-  color:#94a3b8;
-}
-
-/* ================= INPUTS ================= */
-input{
-  width:100%;
-  padding:13px;
-  margin-bottom:16px;
-  border-radius:12px;
-  border:1px solid #1e293b;
-  background:#020617;
-  color:#fff;
-  font-size:14px;
-  text-align:center;
-}
-
-/* ================= BUTTON ================= */
-button{
-  width:100%;
-  padding:13px;
-  border:none;
-  border-radius:12px;
-  background:linear-gradient(135deg,#2563eb,#38bdf8);
-  color:#fff;
-  font-size:15px;
-  font-weight:700;
-  cursor:pointer;
-}
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-/* ================= ERROR ================= */
-#error{
-  margin-top:14px;
-  font-size:13px;
-  color:#ef4444;
-}
-
-/* ================= LOADER OVERLAY ================= */
-.loader-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(2,6,23,.85);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  z-index:10;
-}
-
-/* ================= SPINNER ================= */
 .spinner{
   width:54px;
   height:54px;
@@ -92,6 +31,7 @@ button:disabled{
   border-top:5px solid #38bdf8;
   border-radius:50%;
   animation:spin 1s linear infinite;
+  margin:20px auto 0;
 }
 @keyframes spin{
   to{transform:rotate(360deg)}
@@ -101,71 +41,41 @@ button:disabled{
 
 <body>
 
-<!-- ================= LOADER ================= -->
-<div class="loader-overlay" id="loader">
-  <div class="spinner"></div>
-</div>
-<!-- ======================================== -->
-
 <div class="card">
   <h2>Attendance System</h2>
-  <p>تسجيل دخول الإدارة</p>
-
-  <input id="empId" type="text" placeholder="User ID">
-  <input id="pin" type="password" placeholder="PIN">
-
-  <button id="loginBtn" onclick="login()">دخول</button>
-  <div id="error"></div>
+  <p>جاري الدخول مباشرة إلى لوحة التحكم…</p>
+  <div class="spinner"></div>
 </div>
 
 <script>
-/* ✅ Web App URL (نفس اللي Dashboard بيستخدمه) */
-const API_URL =
-"https://script.google.com/macros/s/AKfycbwLFKF--C1HL_3JnAQAsZZir0Cd2s6lSJAAu4R7zIA_D_KRM6d8QsVpK_h49qiM8PMBaQ/exec";
+/* ==================================================
+   🚨 TEMPORARY LOGIN BYPASS
+   ================================================== */
 
-function showLoader(state){
-  loader.style.display = state ? "flex" : "none";
-  loginBtn.disabled = state;
-}
+/*
+  غير القيم دي حسب المطلوب:
+  role:
+    - sector_manager  (كل الإدارات)
+    - Manager         (إدارة واحدة)
 
-function login(){
-  const id  = empId.value.trim();
-  const pin = pin.value.trim();
-  error.textContent = "";
+  region:
+    - ALL
+    - شمال المنيا
+    - جنوب المنيا
+    - بنى سويف
+*/
 
-  if(!id || !pin){
-    error.textContent = "من فضلك أدخل البيانات كاملة";
-    return;
-  }
+sessionStorage.setItem("authUser", JSON.stringify({
+  id: "TEMP_ACCESS",
+  name: "Temporary Access",
+  role: "sector_manager",
+  region: "ALL"
+}));
 
-  showLoader(true);
-
-  fetch(
-    `${API_URL}?action=login&id=${encodeURIComponent(id)}&pin=${encodeURIComponent(pin)}`
-  )
-  .then(r => r.json())
-  .then(data => {
-
-    if(!data.success){
-      error.textContent = data.message || "ممنوع الدخول";
-      showLoader(false);
-      return;
-    }
-
-    // ✅ تخزين بيانات المستخدم
-    sessionStorage.setItem(
-      "authUser",
-      JSON.stringify(data.user)
-    );
-
-    // ✅ التحويل للداشبورد
-    location.href = "dashboard.html";
-  })
-  .catch(() => {
-    error.textContent = "خطأ في الاتصال بالسيرفر";
-    showLoader(false);
-  });
-}
+/* تحويل تلقائي للداشبورد */
+setTimeout(() => {
+  location.href = "dashboard.html";
+}, 600);
 </script>
 
 </body>
