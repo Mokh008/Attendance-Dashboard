@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <title>Login – Attendance System</title>
@@ -62,6 +62,8 @@ button{
   font-size:15px;
   font-weight:700;
   cursor:pointer;
+  display:block;
+  margin:0 auto; /* ✅ توسيط حقيقي */
 }
 button:disabled{
   opacity:.6;
@@ -123,7 +125,7 @@ button:disabled{
 
 <script>
 /* ✅ URL الجديد */
-const API_URL = "https://script.google.com/macros/s/AKfycbwbo_nIWb5fpds1jXPFiuecKSY1j_RggLL04NwaKpRLypvE8nG2bJ-DT9Ff2Rw9wZ_olw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx-2iNO55YmXN3DDU5JwJdP0--RkXO_m8YI6uBMqe6H5k4Gp4H3gS9TWJVsW4buXvMo3w/exec";
 
 function showLoader(state){
   loader.style.display = state ? "flex" : "none";
@@ -142,27 +144,32 @@ function login(){
 
   showLoader(true);
 
-  fetch(`${API_URL}?action=login&id=${id}&pin=${pin}`)
-    .then(r => r.json())
-    .then(data => {
+  /* ✅ Delay بسيط عشان الـ Loader يبان */
+  setTimeout(() => {
 
-      if(!data.success){
-        error.textContent = "ممنوع الدخول";
+    fetch(`${API_URL}?action=login&id=${id}&pin=${pin}`)
+      .then(r => r.json())
+      .then(data => {
+
+        if(!data.success){
+          error.textContent = "ممنوع الدخول";
+          showLoader(false);
+          return;
+        }
+
+        sessionStorage.setItem(
+          "authUser",
+          JSON.stringify(data.user)
+        );
+
+        location.href = "dashboard.html";
+      })
+      .catch(()=>{
+        error.textContent = "خطأ في الاتصال بالسيرفر";
         showLoader(false);
-        return;
-      }
+      });
 
-      sessionStorage.setItem(
-        "authUser",
-        JSON.stringify(data.user)
-      );
-
-      location.href = "dashboard.html";
-    })
-    .catch(()=>{
-      error.textContent = "خطأ في الاتصال بالسيرفر";
-      showLoader(false);
-    });
+  }, 150);
 }
 </script>
 
