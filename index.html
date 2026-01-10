@@ -16,8 +16,10 @@ if(!AUTH_RAW){
 }
 
 const AUTH_USER = JSON.parse(AUTH_RAW);
-const USER_ROLE   = AUTH_USER.role;
-const USER_REGION = AUTH_USER.region;
+
+/* ✅ NORMALIZE VALUES (الحل النهائي) */
+const USER_ROLE   = (AUTH_USER.role   || "").trim().toLowerCase();
+const USER_REGION = (AUTH_USER.region || "").trim().toUpperCase();
 </script>
 <!-- ============================================== -->
 
@@ -304,14 +306,11 @@ function loadDashboard(){
     const deptData={};
     DEPARTMENTS.forEach(x=>deptData[x]=[]);
 
-    rows
-      .filter(r => r.status === "IN")
-      .forEach(r=>{
-        if(!ENGINEER_DEPT[r.name]) return;
-
-        presentSet.add(r.name);
-        deptData[ENGINEER_DEPT[r.name]].push(r);
-      });
+    rows.filter(r=>r.status==="IN").forEach(r=>{
+      if(!ENGINEER_DEPT[r.name]) return;
+      presentSet.add(r.name);
+      deptData[ENGINEER_DEPT[r.name]].push(r);
+    });
 
     inCount.textContent=presentSet.size;
     outCount.textContent=TOTAL-presentSet.size;
