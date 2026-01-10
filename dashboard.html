@@ -28,8 +28,8 @@ header{
   background:#020617;
   color:#fff;
   border:1px solid #334155;
-  padding:6px 10px;
-  border-radius:6px;
+  padding:7px 14px;
+  border-radius:8px;
   font-size:13px;
 }
 
@@ -88,7 +88,7 @@ header{
   color:#e0e7ff;
 }
 
-/* Split (حضور أوسع – غياب أضيق) */
+/* Split */
 .split{
   display:grid;
   grid-template-columns:2fr 0.8fr;
@@ -130,15 +130,15 @@ header{
 .att-loc{
   color:#93c5fd;
   font-size:12px;
-  white-space:nowrap;        /* سطر واحد */
+  white-space:nowrap;
   overflow:hidden;
-  text-overflow:ellipsis;    /* … */
+  text-overflow:ellipsis;
 }
 
 .att-time{
   text-align:right;
   font-size:12px;
-  color:#c7d2fe;
+  color:#facc15; /* تحسين لون الساعة */
 }
 
 /* Absent */
@@ -186,11 +186,23 @@ header{
 <script>
 /* ================= HELPERS ================= */
 
-// تقصير الاسم (عرض فقط)
+// تقصير الاسم
 function shortName(fullName){
   if(!fullName) return "";
   const p = fullName.trim().split(" ");
   return p.length >= 2 ? p[0] + " " + p[1] : fullName;
+}
+
+// ✅ Google Sheet Time Mirror
+function formatSheetTime(t){
+  if(!t) return "";
+  const d = new Date(t);
+  return d.toLocaleTimeString("en-US",{
+    hour:"numeric",
+    minute:"2-digit",
+    second:"2-digit",
+    hour12:true
+  });
 }
 
 /* ================= CONFIG ================= */
@@ -298,9 +310,9 @@ function renderDepartments(deptData,presentSet){
           <b>حضر (${present.length})</b>
           ${deptData[dept].map(p=>`
             <div class="att-row">
-              <span class="att-name" title="${p.name}">${shortName(p.name)}</span>
-              <span class="att-loc" title="${p.location}">📍 ${p.location}</span>
-              <span class="att-time">⏰ ${p.time}</span>
+              <span class="att-name">${shortName(p.name)}</span>
+              <span class="att-loc">📍 ${p.location}</span>
+              <span class="att-time">⏰ ${formatSheetTime(p.time)}</span>
             </div>
           `).join("") || "-"}
         </div>
