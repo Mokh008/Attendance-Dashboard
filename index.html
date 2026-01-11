@@ -240,7 +240,7 @@ function formatSheetTime(t){
 /* ================= CONFIG ================= */
 const API_URL ="https://script.google.com/macros/s/AKfycbzR-DQ46F5ImxonSkxFebwYPjm5PY9O5nQYSVApqLinkWyu0FuDpflT79PooNvWr5Bj3w/exec";
 
-/* ===== ENGINEER_DEPT: نفس الكود الأصلي بالكامل ===== */
+/* ===== ENGINEER_DEPT ===== */
 const ENGINEER_DEPT = {
   "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
   "Efat Youssef Assad Hanna":"شمال المنيا",
@@ -302,25 +302,24 @@ function loadDashboard(){
 
     const presentSet=new Set();
 
-    /* ✅ FIX: deptData = Set + rows */
     const deptData={};
     DEPARTMENTS.forEach(x=>{
       deptData[x]={ set:new Set(), rows:[] };
     });
 
     rows.filter(r=>r.status==="IN").forEach(r=>{
-  if(!ENGINEER_DEPT[r.name]) return;
+      if(!ENGINEER_DEPT[r.name]) return;
 
-  const dept = ENGINEER_DEPT[r.name];
+      const dept = ENGINEER_DEPT[r.name];
 
-  // 👇 الشرط الحاسم
-  if (USER_ROLE === "region_manager" && dept !== USER_REGION) return;
+      /* ✅ التعديل الوحيد */
+      if (USER_ROLE === "region_manager" && dept !== USER_REGION) return;
 
-  presentSet.add(r.name);
+      presentSet.add(r.name);
+      deptData[dept].set.add(r.name);
+      deptData[dept].rows.push(r);
+    });
 
-  deptData[dept].set.add(r.name);
-  deptData[dept].rows.push(r);
-});
     const ROLE_TOTAL =
       USER_REGION === "ALL"
         ? ENGINEERS.length
