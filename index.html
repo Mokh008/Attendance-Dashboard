@@ -309,15 +309,18 @@ function loadDashboard(){
     });
 
     rows.filter(r=>r.status==="IN").forEach(r=>{
-      if(!ENGINEER_DEPT[r.name]) return;
+  if(!ENGINEER_DEPT[r.name]) return;
 
-      presentSet.add(r.name);
+  const dept = ENGINEER_DEPT[r.name];
 
-      const dept = ENGINEER_DEPT[r.name];
-      deptData[dept].set.add(r.name);   // مهندس واحد
-      deptData[dept].rows.push(r);      // البصمة
-    });
+  // 👇 الشرط الحاسم
+  if (USER_ROLE === "region_manager" && dept !== USER_REGION) return;
 
+  presentSet.add(r.name);
+
+  deptData[dept].set.add(r.name);
+  deptData[dept].rows.push(r);
+});
     const ROLE_TOTAL =
       USER_REGION === "ALL"
         ? ENGINEERS.length
