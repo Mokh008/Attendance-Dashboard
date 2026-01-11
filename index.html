@@ -222,22 +222,6 @@ header{
 
 <div class="departments" id="departmentsBox"></div>
 
-<!-- ===== NEW : OUT SECTION ===== -->
-<div class="dept-card">
-  <h4>انصراف اليوم</h4>
-  <div class="split">
-    <div class="box">
-      <b id="outDoneTitle">انصراف المهندسين (0)</b>
-      <div id="outDoneList"></div>
-    </div>
-    <div class="box">
-      <b id="outPendingTitle">المتبقي (0)</b>
-      <div id="outPendingList"></div>
-    </div>
-  </div>
-</div>
-<!-- ===== END NEW ===== -->
-
 </div>
 
 <script>
@@ -254,7 +238,7 @@ function formatSheetTime(t){
 }
 
 /* ================= CONFIG ================= */
-const API_URL ="https://script.google.com/macros/s/AKfycbznvG-ozeAQ2bOtcRx3M-JaD5VKSdb4w48KRAHP6p6w6EEx3AwNLVk1-c7TU23xK7Inbw/exec";
+const API_URL ="https://script.google.com/macros/s/AKfycby30eaoVeYlUH4mnxnuOAXfGD6PwGj-bJN_M_dpi5jY8knYLqjqGck_0x-ZiFAMjteE7w/exec";
 
 /* ===== ENGINEER_DEPT ===== */
 const ENGINEER_DEPT = {
@@ -317,7 +301,6 @@ function loadDashboard(){
     if(!Array.isArray(rows))return;
 
     const presentSet=new Set();
-    const inRows=[]; // NEW
 
     const deptData={};
     DEPARTMENTS.forEach(x=>{
@@ -328,10 +311,11 @@ function loadDashboard(){
       if(!ENGINEER_DEPT[r.name]) return;
 
       const dept = ENGINEER_DEPT[r.name];
+
+      /* ✅ التعديل الوحيد */
       if (USER_ROLE === "region_manager" && dept !== USER_REGION) return;
 
       presentSet.add(r.name);
-      inRows.push(r); // NEW
       deptData[dept].set.add(r.name);
       deptData[dept].rows.push(r);
     });
@@ -347,43 +331,43 @@ function loadDashboard(){
 
     renderDepartments(deptData,presentSet);
     drawCharts(deptData,presentSet.size,ROLE_TOTAL);
-
-    loadOutSection(inRows); // NEW
   });
 }
 
-/* ===== NEW : OUT LOGIC ===== */
-function loadOutSection(inRows){
-  const d=dateInput.value;
+/* ================= UI ================= */
+function renderDepartments(deptData,presentSet){
+  const box=document.getElementById("departmentsBox");
+  box.innerHTML="";
 
-  fetch(`${API_URL}?action=attendance_out&role=${USER_ROLE}&region=${USER_REGION}&date=${d}`)
-  .then(r=>r.json()).then(outRows=>{
-    const outMap=new Map();
-    outRows.forEach(o=>outMap.set(o.name,o));
+  DEPARTMENTS.forEach(dept=>{
+    if(USER_REGION!=="ALL" && USER_REGION!==dept) return;
 
-    const done=[], pending=[];
-    inRows.forEach(i=>{
-      if(outMap.has(i.name)) done.push(outMap.get(i.name));
-      else pending.push(i.name);
-    });
+    const all=VISIBLE_ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
+    const present=[...deptData[dept].set];
+    const absent=all.filter(e=>!presentSet.has(e));
 
-    outDoneTitle.textContent=`انصراف المهندسين (${done.length})`;
-    outPendingTitle.textContent=`المتبقي (${pending.length})`;
-
-    outDoneList.innerHTML=done.map(o=>`
-      <div class="att-row">
-        <span class="att-name">${shortName(o.name)}</span>
-        <span class="att-loc">📍 ${o.location}</span>
-        <span class="att-time">⏰ ${formatSheetTime(o.time)}</span>
+    box.innerHTML+=`
+    <div class="dept-card">
+      <h4>${dept}</h4>
+      <div class="split">
+        <div class="box">
+          <b>حضر (${present.length})</b>
+          ${deptData[dept].rows.map(p=>`
+            <div class="att-row">
+              <span class="att-name">${shortName(p.name)}</span>
+              <span class="att-loc">📍 ${p.location}</span>
+              <span class="att-time">⏰ ${formatSheetTime(p.time)}</span>
+            </div>
+          `).join("") || "-"}
+        </div>
+        <div class="box">
+          <b>غاب (${absent.length})</b>
+          ${absent.map(a=>`<span class="absent-name">${shortName(a)}</span>`).join("") || "-"}
+        </div>
       </div>
-    `).join("") || "-";
-
-    outPendingList.innerHTML=pending.map(p=>
-      `<span class="absent-name">${shortName(p)}</span>`
-    ).join("") || "-";
+    </div>`;
   });
 }
-/* ===== END NEW ===== */
 
 /* ================= CHARTS ================= */
 function drawCharts(deptData,inCount,roleTotal){
