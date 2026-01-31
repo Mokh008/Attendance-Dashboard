@@ -301,28 +301,29 @@ function loadDashboard(){
     if(!Array.isArray(rows))return;
 
     const presentSet=new Set();
-    const outSet=new Set();                /* 🔹 إضافة */
+    const outSet=new Set();
     const deptData={};
-    const outDeptData={};                  /* 🔹 إضافة */
+    const outDeptData={};
 
     DEPARTMENTS.forEach(x=>{
       deptData[x]={ set:new Set(), rows:[] };
-      outDeptData[x]={ set:new Set(), rows:[] }; /* 🔹 إضافة */
+      outDeptData[x]={ set:new Set(), rows:[] };
     });
 
     rows.forEach(r=>{
       if(!ENGINEER_DEPT[r.name]) return;
 
+      const STATUS = (r.status || r.Action || "").trim().toUpperCase();
       const dept = ENGINEER_DEPT[r.name];
       if (USER_ROLE === "region_manager" && dept !== USER_REGION) return;
 
-      if(r.status==="IN"){
+      if(STATUS==="IN"){
         presentSet.add(r.name);
         deptData[dept].set.add(r.name);
         deptData[dept].rows.push(r);
       }
 
-      if(r.status==="OUT"){                /* 🔹 إضافة */
+      if(STATUS==="OUT"){
         outSet.add(r.name);
         outDeptData[dept].set.add(r.name);
         outDeptData[dept].rows.push(r);
@@ -338,13 +339,13 @@ function loadDashboard(){
     inCount.textContent = presentSet.size;
     outCount.textContent = ROLE_TOTAL - presentSet.size;
 
-    renderDepartments(deptData,presentSet,outDeptData,outSet); /* 🔹 تعديل */
+    renderDepartments(deptData,presentSet,outDeptData,outSet);
     drawCharts(deptData,presentSet.size,ROLE_TOTAL);
   });
 }
 
 /* ================= UI ================= */
-function renderDepartments(deptData,presentSet,outDeptData,outSet){ /* 🔹 تعديل */
+function renderDepartments(deptData,presentSet,outDeptData,outSet){
   const box=document.getElementById("departmentsBox");
   box.innerHTML="";
 
@@ -377,7 +378,6 @@ function renderDepartments(deptData,presentSet,outDeptData,outSet){ /* 🔹 تع
         </div>
       </div>
 
-      <!-- 🔹 الانصراف -->
       <div class="box" style="margin-top:12px">
         <b>الانصراف</b>
         <div class="split">
