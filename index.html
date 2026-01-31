@@ -301,23 +301,32 @@ function loadDashboard(){
     if(!Array.isArray(rows))return;
 
     const presentSet=new Set();
-
+    const outSet=new Set();                /* 🔹 إضافة */
     const deptData={};
+    const outDeptData={};                  /* 🔹 إضافة */
+
     DEPARTMENTS.forEach(x=>{
       deptData[x]={ set:new Set(), rows:[] };
+      outDeptData[x]={ set:new Set(), rows:[] }; /* 🔹 إضافة */
     });
 
-    rows.filter(r=>r.status==="IN").forEach(r=>{
+    rows.forEach(r=>{
       if(!ENGINEER_DEPT[r.name]) return;
 
       const dept = ENGINEER_DEPT[r.name];
-
-      /* ✅ التعديل الوحيد */
       if (USER_ROLE === "region_manager" && dept !== USER_REGION) return;
 
-      presentSet.add(r.name);
-      deptData[dept].set.add(r.name);
-      deptData[dept].rows.push(r);
+      if(r.status==="IN"){
+        presentSet.add(r.name);
+        deptData[dept].set.add(r.name);
+        deptData[dept].rows.push(r);
+      }
+
+      if(r.status==="OUT"){                /* 🔹 إضافة */
+        outSet.add(r.name);
+        outDeptData[dept].set.add(r.name);
+        outDeptData[dept].rows.push(r);
+      }
     });
 
     const ROLE_TOTAL =
@@ -329,13 +338,13 @@ function loadDashboard(){
     inCount.textContent = presentSet.size;
     outCount.textContent = ROLE_TOTAL - presentSet.size;
 
-    renderDepartments(deptData,presentSet);
+    renderDepartments(deptData,presentSet,outDeptData,outSet); /* 🔹 تعديل */
     drawCharts(deptData,presentSet.size,ROLE_TOTAL);
   });
 }
 
 /* ================= UI ================= */
-function renderDepartments(deptData,presentSet){
+function renderDepartments(deptData,presentSet,outDeptData,outSet){ /* 🔹 تعديل */
   const box=document.getElementById("departmentsBox");
   box.innerHTML="";
 
@@ -349,6 +358,7 @@ function renderDepartments(deptData,presentSet){
     box.innerHTML+=`
     <div class="dept-card">
       <h4>${dept}</h4>
+
       <div class="split">
         <div class="box">
           <b>حضر (${present.length})</b>
@@ -360,11 +370,37 @@ function renderDepartments(deptData,presentSet){
             </div>
           `).join("") || "-"}
         </div>
+
         <div class="box">
           <b>غاب (${absent.length})</b>
           ${absent.map(a=>`<span class="absent-name">${shortName(a)}</span>`).join("") || "-"}
         </div>
       </div>
+
+      <!-- 🔹 الانصراف -->
+      <div class="box" style="margin-top:12px">
+        <b>الانصراف</b>
+        <div class="split">
+          <div class="box">
+            <b>انصرف (${outDeptData[dept].rows.length})</b>
+            ${outDeptData[dept].rows.map(o=>`
+              <div class="att-row">
+                <span class="att-name">${shortName(o.name)}</span>
+                <span class="att-loc">📍 ${o.location}</span>
+                <span class="att-time">⏰ ${formatSheetTime(o.time)}</span>
+              </div>
+            `).join("") || "-"}
+          </div>
+
+          <div class="box">
+            <b>لم يبصم انصراف بعد</b>
+            ${present.filter(p=>!outSet.has(p))
+              .map(p=>`<span class="absent-name">${shortName(p)}</span>`)
+              .join("") || "-"}
+          </div>
+        </div>
+      </div>
+
     </div>`;
   });
 }
