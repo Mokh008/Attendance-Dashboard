@@ -1,247 +1,213 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Attendance Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Dashboard — MK Nexus</title>
+<link rel="stylesheet" href="mk-theme.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- ================= AUTH GUARD ================= -->
+<!-- AUTH GUARD -->
 <script>
 const AUTH_RAW = sessionStorage.getItem("authUser");
-
-if(!AUTH_RAW){
-  alert("يجب تسجيل الدخول أولاً");
-  location.href = "https://mokh008.github.io/Attendance-Login/";
-}
-
-const AUTH_USER = JSON.parse(AUTH_RAW);
-
-/* ✅ NORMALIZE VALUES */
+if(!AUTH_RAW){ alert("يجب تسجيل الدخول أولاً"); location.href="https://mokh008.github.io/Attendance-Login/"; }
+const AUTH_USER   = JSON.parse(AUTH_RAW);
 const USER_ROLE   = (AUTH_USER.role   || "").trim().toLowerCase();
 const USER_REGION = (AUTH_USER.region || "").trim().toUpperCase();
 </script>
-<!-- ============================================== -->
 
 <style>
-/* ================= THEME ================= */
-:root{
-  --bg-main:#020617;
-  --bg-soft:#0b1224;
-  --card:#0f172a;
-  --border:#1e293b;
+body { display:block; }
 
-  --text:#e5e7eb;
-  --text-soft:#94a3b8;
+.page-wrap { padding:0 clamp(12px,2.5vw,36px) 60px; }
 
-  --accent:#38bdf8;
-  --accent-2:#818cf8;
-}
-
-/* ================= BASE ================= */
-body{
-  margin:0;
-  font-family:"Segoe UI",Tahoma,sans-serif;
-  background:radial-gradient(circle at top,var(--bg-soft),var(--bg-main) 60%);
-  color:var(--text);
-}
-header{
-  background:linear-gradient(90deg,#020617,#0f172a,#020617);
-  padding:14px;
-  text-align:center;
-  font-size:18px;
-  font-weight:700;
-  border-bottom:1px solid var(--border);
-}
-.container{padding:18px}
-
-/* ================= DATE ================= */
-.date-box{text-align:center;margin-bottom:18px}
-.date-box input{
-  background:var(--card);
-  color:#fff;
-  border:1px solid var(--border);
-  padding:9px 16px;
-  border-radius:12px;
-  font-size:14px;
-  font-weight:600;
-  outline:none;
-}
-.date-box input:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px rgba(56,189,248,.18);
-}
-
-/* ================= KPI ================= */
-.cards{
+/* ── KPI grid ── */
+.kpi-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:16px;
-  margin-bottom:22px;
+  gap:clamp(10px,1.5vw,20px);
+  margin-bottom:clamp(16px,2vw,28px);
 }
-.card{
-  background:linear-gradient(160deg,var(--card),var(--bg-main));
-  padding:16px;
-  border-radius:18px;
+.kpi-box {
+  padding:clamp(14px,2vw,22px);
   text-align:center;
-  border:1px solid var(--border);
-  box-shadow:0 10px 28px rgba(0,0,0,.25);
 }
-.card h3{
-  margin:0;
-  font-size:13px;
-  font-weight:600;
-  color:var(--text-soft);
+.kpi-box h3 {
+  font-size:clamp(11px,.9vw,13px); font-weight:500; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.8px; margin-bottom:10px;
 }
-.card p{
-  margin-top:8px;
-  font-size:28px;
-  font-weight:800;
-  color:var(--accent);
+.kpi-box p {
+  font-family:var(--font-d); font-size:clamp(26px,3.5vw,40px); font-weight:700; margin:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
 
-/* ================= CHARTS ================= */
-.charts{
+/* ── Date picker ── */
+.date-bar {
+  text-align:center; margin:clamp(16px,2vw,24px) 0;
+}
+.date-bar input {
+  background:var(--card-s); color:var(--text);
+  border:1px solid var(--border); padding:9px 18px;
+  border-radius:var(--r-md); font-size:14px; font-weight:600;
+  outline:none; transition:.25s; font-family:var(--font-b);
+}
+.date-bar input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(45,212,191,.12); }
+.date-bar input::-webkit-calendar-picker-indicator { filter:invert(.7); cursor:pointer; }
+
+/* ── Charts grid ── */
+.charts-grid {
   display:grid;
   grid-template-columns:2fr 1fr;
-  gap:18px;
-  margin-bottom:26px;
+  gap:clamp(10px,1.5vw,20px);
+  margin-bottom:clamp(16px,2vw,28px);
 }
-.chart-box{
-  background:linear-gradient(160deg,var(--card),var(--bg-main));
-  padding:16px;
-  border-radius:18px;
-  border:1px solid var(--border);
-  box-shadow:0 10px 28px rgba(0,0,0,.25);
+.chart-box {
+  padding:clamp(14px,2vw,22px);
 }
+.chart-box canvas { width:100%!important; }
 
-/* ================= DEPARTMENTS ================= */
-.departments{
+/* ── Departments grid ── */
+.dept-grid {
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(540px,1fr));
-  gap:20px;
+  grid-template-columns:repeat(auto-fill,minmax(min(520px,100%),1fr));
+  gap:clamp(12px,2vw,24px);
 }
-.dept-card{
-  background:linear-gradient(160deg,var(--card),var(--bg-main));
-  padding:18px;
-  border-radius:20px;
-  border:1px solid var(--border);
-  box-shadow:0 10px 28px rgba(0,0,0,.25);
+.dept-card {
+  padding:clamp(16px,2vw,24px);
 }
-.dept-card h4{
-  margin:0 0 14px;
-  font-size:16px;
-  font-weight:700;
-  color:#e0e7ff;
+.dept-card h4 {
+  font-family:var(--font-d); font-size:clamp(15px,1.4vw,19px);
+  font-weight:700; letter-spacing:1px; color:var(--text);
+  margin-bottom:14px; padding-bottom:10px;
+  border-bottom:1px solid var(--border);
 }
 
-/* ================= SPLIT ================= */
-.split{
-  display:grid;
-  grid-template-columns:2fr .9fr;
-  gap:14px;
+/* ── Split layout inside dept ── */
+.split { display:grid; grid-template-columns:2fr 1fr; gap:12px; }
+
+/* ── Inner boxes (present/absent/out) ── */
+.inner-box {
+  background:rgba(8,13,24,.5); border:1px solid var(--border);
+  border-radius:var(--r-md); padding:12px;
+  font-size:13px; max-height:280px; overflow-y:auto;
+}
+.inner-box b {
+  display:block; margin-bottom:8px;
+  color:var(--accent); font-family:var(--font-d); font-size:13px; letter-spacing:.5px;
 }
 
-/* ================= BOX ================= */
-.box{
-  background:var(--bg-main);
-  border-radius:14px;
-  padding:12px;
-  font-size:13px;
-  max-height:300px;
-  overflow:auto;
-  border:1px solid var(--border);
+/* ── Attendance row ── */
+.att-row {
+  display:grid; grid-template-columns:160px 1fr auto;
+  align-items:center; gap:10px;
+  padding:7px 0; border-bottom:1px dashed rgba(255,255,255,.05);
 }
-.box b{
-  display:block;
-  margin-bottom:8px;
-  color:var(--accent);
-  font-weight:700;
-}
-
-/* ================= ATT ROW ================= */
-.att-row{
-  display:grid;
-  grid-template-columns:180px 1fr auto;
-  align-items:center;
-  gap:12px;
-  padding:8px 0;
-  border-bottom:1px dashed var(--border);
-}
-.att-row:last-child{border-bottom:none}
-
-.att-name{
-  font-weight:700;
-  white-space:nowrap;
-}
-.att-loc{
-  color:#7dd3fc;
-  font-size:13px;
-  white-space:nowrap;
-}
-.att-time{
-  font-size:12px;
-  font-weight:700;
-  color:#fff;
+.att-row:last-child { border-bottom:none; }
+.att-name { font-weight:700; font-size:13px; }
+.att-loc  { color:#7dd3fc; font-size:12px; }
+.att-time {
+  font-size:11px; font-weight:700; color:#fff;
   background:linear-gradient(135deg,#2563eb,#38bdf8);
-  padding:4px 10px;
-  border-radius:8px;
-  white-space:nowrap;
+  padding:3px 9px; border-radius:7px; white-space:nowrap;
 }
 
-/* ================= ABSENT ================= */
-.absent-name{
-  display:block;
-  padding:3px 0;
-  color:#cbd5f5;
-  font-weight:500;
+/* ── Absent names ── */
+.absent-name {
+  display:block; padding:3px 0;
+  color:#cbd5f5; font-size:13px; font-weight:500;
+}
+
+/* ── Out section ── */
+.out-section { margin-top:10px; }
+
+/* ── Logout btn in header ── */
+.logout-btn {
+  padding:6px 14px; font-size:12px;
+  background:transparent; border:1px solid var(--border-a);
+  color:var(--muted); border-radius:var(--r-sm); cursor:pointer;
+  font-family:var(--font-b); transition:.2s;
+}
+.logout-btn:hover { border-color:var(--danger); color:var(--danger); }
+
+@media(max-width:768px){
+  .charts-grid { grid-template-columns:1fr; }
+  .kpi-grid    { grid-template-columns:repeat(3,1fr); }
+  .att-row     { grid-template-columns:1fr; gap:4px; }
+  .split       { grid-template-columns:1fr; }
+}
+@media(max-width:480px){
+  .kpi-grid { grid-template-columns:1fr 1fr; }
 }
 </style>
 </head>
-
 <body>
 
-<header>Attendance Dashboard</header>
-
-<div class="container">
-
-<div class="date-box">
-  <input type="date" id="datePicker">
+<div id="mk-bg"></div>
+<div id="mk-overlay"></div>
+<div class="starfall">
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
+  <div class="falling-star"></div><div class="falling-star"></div>
 </div>
 
-<div class="cards">
-  <div class="card"><h3>إجمالي المهندسين</h3><p id="totalCount">0</p></div>
-  <div class="card"><h3>حضر</h3><p id="inCount">0</p></div>
-  <div class="card"><h3>غاب</h3><p id="outCount">0</p></div>
+<!-- HEADER -->
+<header class="mk-header">
+  <div class="mk-header-brand">
+    <span class="mk-logo" style="font-size:20px">MK NEXUS</span>
+    <div class="mk-header-sep"></div>
+    <span class="mk-header-title">Attendance Dashboard</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="userBadge" style="font-size:12px;color:var(--muted)"></span>
+    <button class="logout-btn" onclick="sessionStorage.clear();location.href='https://mokh008.github.io/Attendance-Login/'">
+      تسجيل الخروج
+    </button>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+  <!-- Date -->
+  <div class="date-bar">
+    <input type="date" id="datePicker">
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="mk-card kpi-box"><h3>إجمالي المهندسين</h3><p id="totalCount">0</p></div>
+    <div class="mk-card kpi-box"><h3>حضر</h3><p id="inCount">0</p></div>
+    <div class="mk-card kpi-box"><h3>غاب</h3><p id="outCount">0</p></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="mk-card chart-box"><canvas id="deptChart"></canvas></div>
+    <div class="mk-card chart-box"><canvas id="pieChartCanvas"></canvas></div>
+  </div>
+
+  <!-- Departments -->
+  <div class="dept-grid" id="departmentsBox"></div>
+
 </div>
 
-<div class="charts">
-  <div class="chart-box"><canvas id="deptChart"></canvas></div>
-  <div class="chart-box"><canvas id="pieChartCanvas"></canvas></div>
-</div>
-
-<div class="departments" id="departmentsBox"></div>
-
-</div>
-
+<!-- ══════════ SCRIPT (unchanged logic) ══════════ -->
 <script>
-/* ================= HELPERS ================= */
-function shortName(fullName){
-  if(!fullName) return "";
-  const p = fullName.trim().split(" ");
-  return p.length >= 2 ? p[0] + " " + p[1] : fullName;
-}
-function formatSheetTime(t){
-  if(!t) return "";
-  const d = new Date(t);
-  return d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",second:"2-digit",hour12:true});
-}
+/* ── User badge ── */
+document.getElementById("userBadge").textContent = AUTH_USER.name
+  ? AUTH_USER.name + " • " + (AUTH_USER.region || "")
+  : "";
 
-/* ================= CONFIG ================= */
-const API_URL ="https://script.google.com/macros/s/AKfycbz3uMeKx0YQ4yPZeBGT3yRJNEiO8sJjD4Rk3D9ZTmw-g12yieKamCVGu2yzOvjbWO8ZdQ/exec";
+/* ── Helpers ── */
+function shortName(n){ if(!n)return""; const p=n.trim().split(" "); return p.length>=2?p[0]+" "+p[1]:n; }
+function formatSheetTime(t){ if(!t)return""; const d=new Date(t); return d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",second:"2-digit",hour12:true}); }
 
-/* ===== ENGINEER_DEPT ===== */
-const ENGINEER_DEPT = {
+const API_URL="https://script.google.com/macros/s/AKfycbz3uMeKx0YQ4yPZeBGT3yRJNEiO8sJjD4Rk3D9ZTmw-g12yieKamCVGu2yzOvjbWO8ZdQ/exec";
+
+const ENGINEER_DEPT={
   "Mohamed Abdellatif Abdelhamid Aly":"بنى سويف",
   "Efat Youssef Assad Hanna":"شمال المنيا",
   "Waleed Mahmoud Ismaiel Abdelrahim":"شمال المنيا",
@@ -272,171 +238,149 @@ const ENGINEER_DEPT = {
   "Omar Metwally Ahmed Mohamed Salem":"آلى",
   "Abdelmoneam Hassan Hafez Karrat":"آلى",
   "Mahmoud Ramadan Mahmoud Abdelaziz":"آلى",
-"Mahmoud Khaled":"جنوب المنيا",
-"Mohamed Youssef":"شمال المنيا",
-"Mohamed Toney Eid Abdel Zaher":"آلى",
-"Mohamed Ali Abdel Hafez":"آلى",
-"Gamal Ahmed Moustafa":"آلى",
-"Mohamed Khaled Kamal ElRawy":"آلى"
+  "Mahmoud Khaled":"جنوب المنيا",
+  "Mohamed Youssef":"شمال المنيا",
+  "Mohamed Toney Eid Abdel Zaher":"آلى",
+  "Mohamed Ali Abdel Hafez":"آلى",
+  "Gamal Ahmed Moustafa":"آلى",
+  "Mohamed Khaled Kamal ElRawy":"آلى"
 };
 
-const ENGINEERS = Object.keys(ENGINEER_DEPT);
-
-const VISIBLE_ENGINEERS =
-  USER_REGION === "ALL"
-    ? ENGINEERS
-    : ENGINEERS.filter(e => ENGINEER_DEPT[e] === USER_REGION);
-
-const DEPARTMENTS = [...new Set(Object.values(ENGINEER_DEPT))];
+const ENGINEERS=Object.keys(ENGINEER_DEPT);
+const VISIBLE_ENGINEERS=USER_REGION==="ALL"?ENGINEERS:ENGINEERS.filter(e=>ENGINEER_DEPT[e]===USER_REGION);
+const DEPARTMENTS=[...new Set(Object.values(ENGINEER_DEPT))];
 
 let barChart=null, pieChart=null;
 
-/* ================= DATE ================= */
+/* ── Date ── */
 const dateInput=document.getElementById("datePicker");
-const today=new Date().toLocaleDateString("en-CA");
-dateInput.value=today;
+dateInput.value=new Date().toLocaleDateString("en-CA");
 dateInput.addEventListener("change",loadDashboard);
 
-/* ================= LOAD ================= */
 function loadDashboard(){
   const d=dateInput.value;
   fetch(`${API_URL}?action=attendance&role=${USER_ROLE}&region=${USER_REGION}&date=${d}`)
   .then(r=>r.json()).then(rows=>{
     if(!Array.isArray(rows))return;
-
-    const presentSet=new Set();
-    const outSet=new Set();
-    const deptData={};
-    const outDeptData={};
-
-    DEPARTMENTS.forEach(x=>{
-      deptData[x]={ set:new Set(), rows:[] };
-      outDeptData[x]={ set:new Set(), rows:[] };
-    });
+    const presentSet=new Set(), outSet=new Set();
+    const deptData={}, outDeptData={};
+    DEPARTMENTS.forEach(x=>{ deptData[x]={set:new Set(),rows:[]}; outDeptData[x]={set:new Set(),rows:[]}; });
 
     rows.forEach(r=>{
-      if(!ENGINEER_DEPT[r.name]) return;
-
-      const STATUS = (r.status || r.Action || "").trim().toUpperCase();
-      const dept = ENGINEER_DEPT[r.name];
-      if (USER_ROLE === "region_manager" && dept !== USER_REGION) return;
-
-      if(STATUS==="IN"){
-        presentSet.add(r.name);
-        deptData[dept].set.add(r.name);
-        deptData[dept].rows.push(r);
-      }
-
-      if(STATUS==="OUT"){
-        outSet.add(r.name);
-        outDeptData[dept].set.add(r.name);
-        outDeptData[dept].rows.push(r);
-      }
+      if(!ENGINEER_DEPT[r.name])return;
+      const STATUS=(r.status||r.Action||"").trim().toUpperCase();
+      const dept=ENGINEER_DEPT[r.name];
+      if(USER_ROLE==="region_manager"&&dept!==USER_REGION)return;
+      if(STATUS==="IN"){ presentSet.add(r.name); deptData[dept].set.add(r.name); deptData[dept].rows.push(r); }
+      if(STATUS==="OUT"){ outSet.add(r.name); outDeptData[dept].set.add(r.name); outDeptData[dept].rows.push(r); }
     });
 
-    const ROLE_TOTAL =
-      USER_REGION === "ALL"
-        ? ENGINEERS.length
-        : ENGINEERS.filter(e => ENGINEER_DEPT[e] === USER_REGION).length;
-
-    totalCount.textContent = ROLE_TOTAL;
-    inCount.textContent = presentSet.size;
-    outCount.textContent = ROLE_TOTAL - presentSet.size;
+    const ROLE_TOTAL=USER_REGION==="ALL"?ENGINEERS.length:ENGINEERS.filter(e=>ENGINEER_DEPT[e]===USER_REGION).length;
+    document.getElementById("totalCount").textContent=ROLE_TOTAL;
+    document.getElementById("inCount").textContent=presentSet.size;
+    document.getElementById("outCount").textContent=ROLE_TOTAL-presentSet.size;
 
     renderDepartments(deptData,presentSet,outDeptData,outSet);
     drawCharts(deptData,presentSet.size,ROLE_TOTAL);
   });
 }
 
-/* ================= UI ================= */
 function renderDepartments(deptData,presentSet,outDeptData,outSet){
   const box=document.getElementById("departmentsBox");
   box.innerHTML="";
-
   DEPARTMENTS.forEach(dept=>{
-    if(USER_REGION!=="ALL" && USER_REGION!==dept) return;
-
+    if(USER_REGION!=="ALL"&&USER_REGION!==dept)return;
     const all=VISIBLE_ENGINEERS.filter(e=>ENGINEER_DEPT[e]===dept);
     const present=[...deptData[dept].set];
     const absent=all.filter(e=>!presentSet.has(e));
 
     box.innerHTML+=`
-    <div class="dept-card">
+    <div class="mk-card dept-card">
       <h4>${dept}</h4>
-
       <div class="split">
-        <div class="box">
+        <div class="inner-box">
           <b>حضر (${present.length})</b>
           ${deptData[dept].rows.map(p=>`
             <div class="att-row">
               <span class="att-name">${shortName(p.name)}</span>
               <span class="att-loc">📍 ${p.location}</span>
               <span class="att-time">⏰ ${formatSheetTime(p.time)}</span>
-            </div>
-          `).join("") || "-"}
+            </div>`).join("")||"<span style='color:var(--muted)'>-</span>"}
         </div>
-
-        <div class="box">
+        <div class="inner-box">
           <b>غاب (${absent.length})</b>
-          ${absent.map(a=>`<span class="absent-name">${shortName(a)}</span>`).join("") || "-"}
+          ${absent.map(a=>`<span class="absent-name">${shortName(a)}</span>`).join("")||"<span style='color:var(--muted)'>-</span>"}
         </div>
       </div>
-
-      <div class="box" style="margin-top:12px">
-        <b>الانصراف</b>
+      <div class="out-section">
         <div class="split">
-          <div class="box">
+          <div class="inner-box">
             <b>انصرف (${outDeptData[dept].rows.length})</b>
             ${outDeptData[dept].rows.map(o=>`
               <div class="att-row">
                 <span class="att-name">${shortName(o.name)}</span>
                 <span class="att-loc">📍 ${o.location}</span>
                 <span class="att-time">⏰ ${formatSheetTime(o.time)}</span>
-              </div>
-            `).join("") || "-"}
+              </div>`).join("")||"<span style='color:var(--muted)'>-</span>"}
           </div>
-
-          <div class="box">
-            <b>لم يبصم انصراف بعد</b>
+          <div class="inner-box">
+            <b>لم يبصم انصراف</b>
             ${present.filter(p=>!outSet.has(p))
               .map(p=>`<span class="absent-name">${shortName(p)}</span>`)
-              .join("") || "-"}
+              .join("")||"<span style='color:var(--muted)'>-</span>"}
           </div>
         </div>
       </div>
-
     </div>`;
   });
 }
 
-/* ================= CHARTS ================= */
-function drawCharts(deptData,inCount,roleTotal){
+function drawCharts(deptData,inCnt,roleTotal){
   if(barChart)barChart.destroy();
   if(pieChart)pieChart.destroy();
 
-  const CHART_DEPTS =
-    USER_REGION === "ALL" ? DEPARTMENTS : [USER_REGION];
+  const CHART_DEPTS=USER_REGION==="ALL"?DEPARTMENTS:[USER_REGION];
+  const isDark=true;
+  const gridC="rgba(255,255,255,0.05)";
+  const labelC="#64748b";
+  const opts={
+    responsive:true, maintainAspectRatio:true, aspectRatio:window.innerWidth<600?1.4:2,
+    plugins:{legend:{display:false},tooltip:{
+      backgroundColor:"rgba(15,22,40,.92)", borderColor:"rgba(45,212,191,.3)", borderWidth:1,
+      titleColor:"#f1f5f9", bodyColor:"#94a3b8", padding:12, cornerRadius:10
+    }},
+    scales:{
+      x:{grid:{color:gridC},ticks:{color:labelC}},
+      y:{beginAtZero:true,grid:{color:gridC},ticks:{color:labelC}}
+    }
+  };
 
   barChart=new Chart(deptChart,{
     type:"bar",
     data:{
       labels:CHART_DEPTS,
-      datasets:[{
-        data:CHART_DEPTS.map(d=>deptData[d]?.set.size || 0),
-        backgroundColor:"#38bdf8"
-      }]
+      datasets:[{data:CHART_DEPTS.map(d=>deptData[d]?.set.size||0),
+        backgroundColor:"rgba(45,212,191,.7)", borderColor:"#2dd4bf",
+        borderWidth:1, borderRadius:8}]
     },
-    options:{plugins:{legend:{display:false}}}
+    options:{...opts,plugins:{...opts.plugins,title:{display:true,text:"حضور حسب المنطقة",color:"#94a3b8",font:{size:13}}}}
   });
 
   pieChart=new Chart(pieChartCanvas,{
-    type:"pie",
+    type:"doughnut",
     data:{
       labels:["حضر","غاب"],
-      datasets:[{
-        data:[inCount,roleTotal-inCount],
-        backgroundColor:["#38bdf8","#818cf8"]
-      }]
+      datasets:[{data:[inCnt,roleTotal-inCnt],
+        backgroundColor:["rgba(45,212,191,.8)","rgba(129,140,248,.6)"],
+        borderColor:["#2dd4bf","#818cf8"], borderWidth:2, hoverOffset:8}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true, cutout:"65%",
+      plugins:{
+        legend:{position:"bottom",labels:{color:"#94a3b8",font:{size:12},padding:16}},
+        tooltip:{backgroundColor:"rgba(15,22,40,.92)",borderColor:"rgba(45,212,191,.3)",borderWidth:1,
+          titleColor:"#f1f5f9",bodyColor:"#94a3b8",padding:12,cornerRadius:10}
+      }
     }
   });
 }
@@ -444,6 +388,5 @@ function drawCharts(deptData,inCount,roleTotal){
 loadDashboard();
 setInterval(loadDashboard,30000);
 </script>
-
 </body>
 </html>
